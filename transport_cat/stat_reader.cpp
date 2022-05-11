@@ -2,7 +2,7 @@
 
 namespace stat_reader {
 
-	std::string ParseToBusName(const std::string& query) {
+	std::string_view ParseToBusName(std::string_view query) {
 		size_t start_name_pos = query.find_first_not_of(' ', 3);
 		return(query.substr(
 			start_name_pos,
@@ -10,7 +10,7 @@ namespace stat_reader {
 		));
 	}
 
-	void OutputStat(const std::string& name, size_t stop_count, size_t unique_stop_count, double distance)
+	void OutputStat(std::string_view name, size_t stop_count, size_t unique_stop_count, double distance)
 	{
 		if (stop_count == 0){
 			std::cout << "Bus " << name << ": not found" << std::endl;

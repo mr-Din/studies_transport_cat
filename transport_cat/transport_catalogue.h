@@ -18,11 +18,11 @@
 
 
 struct Stop {
-	std::string name;
+	std::string_view name;
 	Coordinates coordinates;
 };
 struct Bus {	// маршрут
-	std::string name;
+	std::string_view name;
 	std::vector<const Stop*> bus;
 	double distance;
 };
@@ -35,7 +35,7 @@ struct BusInfo {
 
 struct PairStopsHasher {
 	size_t operator()(const std::pair<const Stop*, const Stop*>& stops) const {
-		return hasher(stops.first->name + stops.second->name);	
+		return hasher(std::string(stops.first->name) + std::string(stops.second->name));
 	}
 	std::hash<std::string> hasher;
 };
@@ -44,16 +44,16 @@ class TransportCatalogue {
 public:
 
 	//добавление остановки в базу,
-	void AddStop(const std::string& stop_name, const Coordinates coordinates);
+	void AddStop(const std::string_view stop_name, const Coordinates coordinates);
 	//добавление маршрута в базу,
-	void AddBus(const std::string& bus_name,
-		const std::vector<std::string>& stops_query);
+	void AddBus(std::string_view bus_name,
+		const std::vector<std::string_view>& stops_query);
 	//поиск маршрута по имени,
-	const Bus& FindBus(const std::string& bus_name);
+	const Bus& FindBus(std::string_view bus_name);
 	//поиск остановки по имени,
-	const Stop& FindStop(const std::string& stop_name);
+	const Stop& FindStop(std::string_view stop_name);
 	//получение информации о маршруте.
-	BusInfo GetBusInfo(const std::string& name);
+	BusInfo GetBusInfo(std::string_view name);
 	
 
 

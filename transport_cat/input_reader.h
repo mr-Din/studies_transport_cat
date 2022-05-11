@@ -10,26 +10,27 @@
 namespace input_reader {
 
 	struct DataForStop {
-		std::string name;
+		std::string_view name;
 		Coordinates coordinate;
 	};
 	struct DataForBus {
-		std::string name;
-		std::vector<std::string> stops;
+		std::string_view name;
+		std::vector<std::string_view> stops;
 	};
 	std::string ReadLine();
 	int ReadLineWithNumber();
 	std::vector<std::string> ParseQueriesToVector();
-	bool IsStopQuery(const std::string& query);
-	bool IsBusQuery(const std::string& query);
-	DataForStop ParseToStop(const std::string& query);
-	DataForBus ParseToBus(const std::string& query);
+	bool IsStopQuery(std::string_view query);
+	bool IsBusQuery(std::string_view query);
+	DataForStop ParseToStop(std::string_view query);
+	DataForBus ParseToBus(std::string_view query);
 
 	
-	std::string ParseToName(const std::string& query, size_t start_name, size_t colon_pos);
+	std::string_view ParseToName(std::string_view query, size_t start_name, size_t colon_pos);
 	
-	std::pair<double, double> ParseToCoordinates(const std::string& query,
+	std::pair<double, double> ParseToCoordinates(std::string_view query,
 		size_t colon_pos, size_t comma_pos);
 
-	std::vector<std::string> ParseToStopsName (const std::string& query, size_t colon_pos);
+	std::vector<std::string_view> ParseToStopsName (std::string_view query, size_t colon_pos);
+	
 }

@@ -29,17 +29,17 @@ namespace input_reader {
 		return queries;
 	}
 
-	bool IsStopQuery(const std::string& query)
+	bool IsStopQuery(string_view query)
 	{
 		return !query.empty() && query[0] == 'S';
 	}
 
-	bool IsBusQuery(const std::string& query)
+	bool IsBusQuery(string_view query)
 	{
 		return !query.empty() && query[0] == 'B';
 	}
 
-	DataForStop ParseToStop(const std::string& query)
+	DataForStop ParseToStop(string_view query)
 	{
 		size_t start_name = query.find_first_not_of(' ', 4);
 		size_t colon_pos = query.find_first_of(':');
@@ -49,18 +49,18 @@ namespace input_reader {
 			 coordinates.first, coordinates.second};
 	}
 
-	DataForBus ParseToBus(const std::string& query)
+	DataForBus ParseToBus(string_view query)
 	{
 		size_t start_name = query.find_first_not_of(' ', 3);
 		size_t colon_pos = query.find_first_of(':');
 
-		return { move(ParseToName(query, start_name, colon_pos)),
+		return { ParseToName(query, start_name, colon_pos),
 			ParseToStopsName(query, colon_pos) };
 	}
 	
-	string ParseToName(const string& query, size_t start_name, size_t colon_pos)
+	string_view ParseToName(string_view query, size_t start_name, size_t colon_pos)
 	{
-		string stop_name = query.substr(
+		string_view stop_name = query.substr(
 			start_name,
 			query.find_last_not_of(' ', colon_pos - 1) - start_name + 1);
 		//std::cout <<'!'<< stop_name<<'!' << std::endl;
@@ -68,26 +68,26 @@ namespace input_reader {
 		
 	}
 
-	pair<double, double> ParseToCoordinates(const string& query,
+	pair<double, double> ParseToCoordinates(string_view query,
 		size_t colon_pos, size_t comma_pos) {
-		double lat = stod(query.substr(
+		double lat = stod(string(query).substr(
 			colon_pos + 1,
 			comma_pos - colon_pos
 		));
-		double lng = stod(query.substr(
+		double lng = stod(string(query).substr(
 			comma_pos + 1
 		));
-		return { lat, lng };;
+		return { lat, lng };
 	}
 
-	vector<string> ParseToStopsName(const string& query, size_t colon_pos)
+	vector<string_view> ParseToStopsName(string_view query, size_t colon_pos)
 	{
-		vector<string> stops;
+		vector<string_view> stops;
 		
 		if (size_t separator_pos = query.find_first_of(">-"); separator_pos != string::npos) {
 			size_t start_stop_name_pos = query.find_first_not_of(' ', colon_pos + 1);
 			while (separator_pos != string::npos) {
-				string stop_name = query.substr(
+				string_view stop_name = query.substr(
 					start_stop_name_pos,
 					query.find_last_not_of(' ', separator_pos - 1) - start_stop_name_pos + 1);
 				stops.push_back(move(stop_name));
@@ -95,7 +95,7 @@ namespace input_reader {
 				start_stop_name_pos = query.find_first_not_of(' ', separator_pos + 1);
 				separator_pos = query.find_first_of(">-", separator_pos + 1);
 			}
-			string stop_name = query.substr(
+			string_view stop_name = query.substr(
 				start_stop_name_pos,
 				query.find_last_not_of(' ') - start_stop_name_pos + 1);
 			stops.push_back(move(stop_name));

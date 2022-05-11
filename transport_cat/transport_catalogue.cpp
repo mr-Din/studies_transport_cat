@@ -3,7 +3,7 @@
 using namespace std;
 
 
-void TransportCatalogue::AddStop(const std::string& stop_name, const Coordinates coordinates)
+void TransportCatalogue::AddStop(const string_view stop_name, const Coordinates coordinates)
 {
 	// добавляем остановку в stops_
 	stops_.push_back({ stop_name, { coordinates.lat, coordinates.lng} });
@@ -20,19 +20,18 @@ void TransportCatalogue::AddStop(const std::string& stop_name, const Coordinates
 
 }
 
-void TransportCatalogue::AddBus(const std::string& bus_name,
-	const std::vector<std::string>& stops_query) {
+void TransportCatalogue::AddBus(string_view bus_name,
+	const vector<string_view>& stops_query) {
 	// маршрут (последовательность остановок)
 	vector<const Stop*> bus;
 	bus.reserve(stops_query.size());
 	for_each(
 		stops_query.begin(), stops_query.end(),
-		[&](const string& stop_name) {
+		[&](auto stop_name) {
 			bus.push_back(stopname_to_stop_[stop_name]);
-			//bus.push_back(&FindStop(stop_name));
 		});
-	/*for (auto& stop_name : stops_query) {
-		bus.push_back(&FindStop(stop_name));
+	/*for (auto stop_name : stops_query) {
+		bus.push_back(stopname_to_stop_[stop_name]);
 	}*/
 
 	// расстояние маршрута
@@ -48,7 +47,7 @@ void TransportCatalogue::AddBus(const std::string& bus_name,
 	busname_to_bus_[buses_.back().name] = &buses_.back();
 }
 
-const Bus& TransportCatalogue::FindBus(const std::string& bus_name)
+const Bus& TransportCatalogue::FindBus(std::string_view bus_name)
 {
 	static Bus empty_res;
 
@@ -59,7 +58,7 @@ const Bus& TransportCatalogue::FindBus(const std::string& bus_name)
 	return *iter->second;
 }
 
-const Stop& TransportCatalogue::FindStop(const std::string& stop_name)
+const Stop& TransportCatalogue::FindStop(std::string_view stop_name)
 {
 	static Stop empty_res;
 
@@ -70,7 +69,7 @@ const Stop& TransportCatalogue::FindStop(const std::string& stop_name)
 	return *iter->second;
 }
 
-BusInfo TransportCatalogue::GetBusInfo(const std::string& bus_name)
+BusInfo TransportCatalogue::GetBusInfo(std::string_view bus_name)
 {
 	auto& bus = FindBus(bus_name);
 	size_t stops_count = bus.bus.size();
