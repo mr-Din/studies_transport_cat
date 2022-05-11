@@ -1,5 +1,6 @@
 #pragma once
 #include "geo.h"
+#include "log_duration.h"
 
 #include <string>
 #include <string_view>
@@ -14,6 +15,8 @@
 #include <utility>
 
 
+
+
 struct Stop {
 	std::string name;
 	Coordinates coordinates;
@@ -21,6 +24,12 @@ struct Stop {
 struct Bus {	// маршрут
 	std::string name;
 	std::vector<const Stop*> bus;
+	double distance;
+};
+
+struct BusInfo {
+	size_t stops_count;
+	size_t unique_stops_count;
 	double distance;
 };
 
@@ -35,7 +44,7 @@ class TransportCatalogue {
 public:
 
 	//добавление остановки в базу,
-	void AddStop(const std::string& stop_name, const double lat, const double lng);
+	void AddStop(const std::string& stop_name, const Coordinates coordinates);
 	//добавление маршрута в базу,
 	void AddBus(const std::string& bus_name,
 		const std::vector<std::string>& stops_query);
@@ -44,7 +53,7 @@ public:
 	//поиск остановки по имени,
 	const Stop& FindStop(const std::string& stop_name);
 	//получение информации о маршруте.
-	std::tuple<size_t, size_t, double> GetBusInfo(const std::string& name);
+	BusInfo GetBusInfo(const std::string& name);
 	
 
 

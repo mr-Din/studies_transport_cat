@@ -49,41 +49,48 @@ int main()
     catalogue.AddBus("750"s, stops750);*/
 
     // Вызов ввода числа запросов, самих запросов и заполнение базы запросов!
-    
-    input_reader::InputReader input = input_reader::Load();
-    for (const auto& stop : input.stops_query_) {
-        catalogue.AddStop(stop.first, stop.second.first, stop.second.second);
-    }
-    for (const auto& bus : input.buses_query_) {
-        catalogue.AddBus(bus.first, bus.second);
+    auto input = input_reader::ParseQueriesToVector();
+    sort(input.begin(), input.end(), std::greater<std::string>());
+    for (const auto& query : input) {
+        if (input_reader::IsStopQuery(query)) {
+            auto data_for_stop = input_reader::ParseToStop(query);
+            catalogue.AddStop(data_for_stop.name, data_for_stop.coordinate);
+        }
+        else if (input_reader::IsBusQuery(query)) {
+            auto data_for_bus = input_reader::ParseToBus(query);
+            catalogue.AddBus(data_for_bus.name, data_for_bus.stops);
+        }
     }
 
+    auto stat = input_reader::ParseQueriesToVector();
+    for (const auto& query : stat) {
+        auto bus_name = stat_reader::ParseToBusName(query);
+        auto bus_info = catalogue.GetBusInfo(bus_name);
+        stat_reader::OutputStat(bus_name, bus_info.stops_count, bus_info.unique_stops_count,
+            bus_info.distance);
+    }
+
+    
+    /*input_reader::InputReader input = input_reader::Load();
+    {   LOG_DURATION("Test of AddStop");
+        for (const auto& stop : input.stops_query_) {
+        catalogue.AddStop(stop.first, stop.second.first, stop.second.second);
+    }
+    }
+    {
+        LOG_DURATION("Test of AddBus");
+        for (const auto& bus : input.buses_query_) {
+            catalogue.AddBus(bus.first, bus.second);
+        }
+    }
 
 
     stat_reader::StatReader stat = stat_reader::Load(input_reader::ParseQueriesToVector());
     for (const auto& bus : stat.GetBusesName()) {
         auto [count_stops, count_unique_stops, length] = catalogue.GetBusInfo(bus);
         stat_reader::OutputStat(bus, count_stops, count_unique_stops, length);
-    }
-
-
-
-   // GetInputReader();
-
-    /*int query_count = ReadLineWithNumber();
-    vector<string> queries;
-    queries.reserve(query_count);
-    for (int i = 0; i < query_count; ++i) {
-        string query = ReadLine();
-        queries.push_back(query);
-    }
-    for (const string& s : queries) {
-        cout << s << endl;
     }*/
-    
-    /*cout << catalogue.GetBusInfo("256"s) << endl;
-    cout << catalogue.GetBusInfo("750"s) << endl;
-    cout << catalogue.GetBusInfo("751"s) << endl;*/
+
 
 }
 

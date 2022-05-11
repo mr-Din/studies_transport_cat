@@ -19,6 +19,7 @@ namespace input_reader {
 	// формируем вектор из запросов
 	vector<string> ParseQueriesToVector() {
 		int query_count = ReadLineWithNumber();
+		LOG_DURATION("Test of ParseQueriesToVector");
 		vector<string> queries;
 		queries.reserve(query_count);
 		for (int i = 0; i < query_count; ++i) {
@@ -28,40 +29,35 @@ namespace input_reader {
 		return queries;
 	}
 
-
-	InputReader Load()
+	bool IsStopQuery(const std::string& query)
 	{
-		vector<string> queries = ParseQueriesToVector();
-
-		// —оздали структуру, в которой буду располагатьс€ запросы
-		InputReader input;
-
-		// ќбрабатываем каждый запрос (string query) и заполн€ем
-		// нужный контейнер структуры
-
-		for (string& query : queries) {
-			// ≈сли запрос на создание остановки
-			if (!query.empty() && query[0] == 'S') {
-				size_t start_name = query.find_first_not_of(' ', 4);
-				size_t colon_pos = query.find_first_of(':');
-				size_t comma_pos = query.find_first_of(',');
-				
-				input.stops_query_[move(ParseToName(query, start_name, colon_pos))]
-					= ParseToCoordinates(query, colon_pos, comma_pos);
-			}
-			// ≈сли запрос на создание маршрута
-			else if (!query.empty() && query[0] == 'B') {
-				size_t start_name = query.find_first_not_of(' ', 3);
-				size_t colon_pos = query.find_first_of(':');
-
-				input.buses_query_[move(ParseToName(query, start_name, colon_pos))] =
-					ParseToStopsName(query, colon_pos);
-			}
-		}
-
-		return input;
+		return !query.empty() && query[0] == 'S';
 	}
 
+	bool IsBusQuery(const std::string& query)
+	{
+		return !query.empty() && query[0] == 'B';
+	}
+
+	DataForStop ParseToStop(const std::string& query)
+	{
+		size_t start_name = query.find_first_not_of(' ', 4);
+		size_t colon_pos = query.find_first_of(':');
+		size_t comma_pos = query.find_first_of(',');
+		auto coordinates = ParseToCoordinates(query, colon_pos, comma_pos);
+		return { move(ParseToName(query, start_name, colon_pos)),
+			 coordinates.first, coordinates.second};
+	}
+
+	DataForBus ParseToBus(const std::string& query)
+	{
+		size_t start_name = query.find_first_not_of(' ', 3);
+		size_t colon_pos = query.find_first_of(':');
+
+		return { move(ParseToName(query, start_name, colon_pos)),
+			ParseToStopsName(query, colon_pos) };
+	}
+	
 	string ParseToName(const string& query, size_t start_name, size_t colon_pos)
 	{
 		string stop_name = query.substr(
@@ -84,7 +80,7 @@ namespace input_reader {
 		return { lat, lng };;
 	}
 
-	vector<string> ParseToStopsName(string& query, size_t colon_pos)
+	vector<string> ParseToStopsName(const string& query, size_t colon_pos)
 	{
 		vector<string> stops;
 		
@@ -112,4 +108,5 @@ namespace input_reader {
 		}
 		return stops;
 	}
+	
 }

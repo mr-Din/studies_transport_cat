@@ -3,10 +3,10 @@
 using namespace std;
 
 
-void TransportCatalogue::AddStop(const std::string& stop_name, const double lat, const double lng)
+void TransportCatalogue::AddStop(const std::string& stop_name, const Coordinates coordinates)
 {
 	// добавляем остановку в stops_
-	stops_.push_back({ stop_name, {lat, lng} });
+	stops_.push_back({ stop_name, { coordinates.lat, coordinates.lng} });
 	// добавляем остановку в stopname_to_stop_
 	stopname_to_stop_[stops_.back().name] = &stops_.back();
 	// добавление расстояния до других остановок
@@ -22,7 +22,6 @@ void TransportCatalogue::AddStop(const std::string& stop_name, const double lat,
 
 void TransportCatalogue::AddBus(const std::string& bus_name,
 	const std::vector<std::string>& stops_query) {
-
 	// маршрут (последовательность остановок)
 	vector<const Stop*> bus;
 	bus.reserve(stops_query.size());
@@ -71,7 +70,7 @@ const Stop& TransportCatalogue::FindStop(const std::string& stop_name)
 	return *iter->second;
 }
 
-std::tuple<size_t, size_t, double> TransportCatalogue::GetBusInfo(const std::string& bus_name)
+BusInfo TransportCatalogue::GetBusInfo(const std::string& bus_name)
 {
 	auto& bus = FindBus(bus_name);
 	size_t stops_count = bus.bus.size();
