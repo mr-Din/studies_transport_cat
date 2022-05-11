@@ -26,7 +26,7 @@ struct Bus {	// маршрут
 
 struct PairStopsHasher {
 	size_t operator()(const std::pair<const Stop*, const Stop*>& stops) const {
-		return hasher(stops.first->name + stops.second->name);
+		return hasher(stops.first->name + stops.second->name);	
 	}
 	std::hash<std::string> hasher;
 };

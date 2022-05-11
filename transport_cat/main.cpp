@@ -51,19 +51,14 @@ int main()
     // Вызов ввода числа запросов, самих запросов и заполнение базы запросов!
     
     input_reader::InputReader input = input_reader::Load();
-    for (const auto& stop : input.GetStopsQuery()) {
+    for (const auto& stop : input.stops_query_) {
         catalogue.AddStop(stop.first, stop.second.first, stop.second.second);
     }
-    for (const auto& bus : input.GetBusesQuery()) {
+    for (const auto& bus : input.buses_query_) {
         catalogue.AddBus(bus.first, bus.second);
     }
 
 
-    /*auto [count_stops, count_unique_stops, length] = catalogue.GetBusInfo("256"s);
-    cout << count_stops << count_unique_stops << length << endl;
-
-    std::tie(count_stops, count_unique_stops, length) = catalogue.GetBusInfo("750"s);
-    cout << count_stops << count_unique_stops << length << endl;*/
 
     stat_reader::StatReader stat = stat_reader::Load(input_reader::ParseQueriesToVector());
     for (const auto& bus : stat.GetBusesName()) {

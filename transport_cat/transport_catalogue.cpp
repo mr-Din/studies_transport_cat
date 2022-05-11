@@ -10,6 +10,7 @@ void TransportCatalogue::AddStop(const std::string& stop_name, const double lat,
 	// добавляем остановку в stopname_to_stop_
 	stopname_to_stop_[stops_.back().name] = &stops_.back();
 	// добавление расстояния до других остановок
+
 	for (const auto& [name, stop] : stopname_to_stop_) {
 		distance_[{&stops_.back(), stop}] =
 			ComputeDistance(stops_.back().coordinates, stop->coordinates);

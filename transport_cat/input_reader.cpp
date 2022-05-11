@@ -1,139 +1,115 @@
 #include "input_reader.h"
 
+using namespace std;
+
 namespace input_reader {
-	std::string ReadLine() {
-		std::string s;
-		std::getline(std::cin, s);
+	string ReadLine() {
+		string s;
+		getline(cin, s);
 		return s;
 	}
 
 	int ReadLineWithNumber() {
 		int result;
-		std::cin >> result;
+		cin >> result;
 		ReadLine();
 		return result;
 	}
 
-	std::vector<std::string> ParseQueriesToVector() {
+	// формируем вектор из запросов
+	vector<string> ParseQueriesToVector() {
 		int query_count = ReadLineWithNumber();
-		std::vector<std::string> queries;
+		vector<string> queries;
 		queries.reserve(query_count);
 		for (int i = 0; i < query_count; ++i) {
-			std::string query = ReadLine();
+			string query = ReadLine();
 			queries.push_back(move(query));
 		}
 		return queries;
 	}
 
-	std::pair<double, double>& InputReader::AddStop(std::string name) {
-		return stops_query_[move(name)];
-	}
-
-	std::vector<std::string>& InputReader::AddBus(std::string name)
-	{
-		return buses_query_[move(name)];
-	}
-
-	std::unordered_map<std::string, std::pair<double, double>>& InputReader::GetStopsQuery()
-	{
-		return stops_query_;
-	}
-
-	std::unordered_map<std::string, std::vector<std::string>>& InputReader::GetBusesQuery()
-	{
-		return buses_query_;
-	}
 
 	InputReader Load()
 	{
-		std::vector<std::string> queries = ParseQueriesToVector();
+		vector<string> queries = ParseQueriesToVector();
 
+		// —оздали структуру, в которой буду располагатьс€ запросы
 		InputReader input;
 
-		for (std::string& query : queries) {
+		// ќбрабатываем каждый запрос (string query) и заполн€ем
+		// нужный контейнер структуры
+
+		for (string& query : queries) {
 			// ≈сли запрос на создание остановки
 			if (!query.empty() && query[0] == 'S') {
-
+				size_t start_name = query.find_first_not_of(' ', 4);
 				size_t colon_pos = query.find_first_of(':');
 				size_t comma_pos = query.find_first_of(',');
-				size_t start_name = query.find_first_not_of(' ', 4);
-
-				std::string stop_name = query.substr(
-					start_name,
-					query.find_last_not_of(' ', colon_pos - 1) - start_name + 1);
-				//std::cout <<'!'<< stop_name<<'!' << std::endl;
-
-				double lat = std::stod(query.substr(
-					colon_pos + 1,
-					comma_pos - colon_pos
-				));
-				double lng = std::stod(query.substr(
-					comma_pos + 1
-				));
-				//std::cout << '!' << lat << '!' << lng << '!' << std::endl;
-				input.AddStop(move(stop_name)) = { lat, lng };
+				
+				input.stops_query_[move(ParseToName(query, start_name, colon_pos))]
+					= ParseToCoordinates(query, colon_pos, comma_pos);
 			}
+			// ≈сли запрос на создание маршрута
 			else if (!query.empty() && query[0] == 'B') {
-				size_t colon_pos = query.find_first_of(':');
 				size_t start_name = query.find_first_not_of(' ', 3);
+				size_t colon_pos = query.find_first_of(':');
 
-				std::string bus_name = query.substr(
-					start_name,
-					query.find_last_not_of(' ', colon_pos - 1) - start_name + 1);
-				//std::cout << '!' << bus_name << '!' << std::endl;
-				std::vector<std::string> stops; // = ParseQueryToStopsName (string& query)
-				if (size_t separator_pos = query.find('>'); separator_pos != std::string::npos) {
-					size_t start_stop_name_pos = query.find_first_not_of(' ', colon_pos + 1);
-					while (separator_pos != std::string::npos) {
-						std::string stop_name = query.substr(
-							start_stop_name_pos,
-							query.find_last_not_of(' ', separator_pos - 1) - start_stop_name_pos + 1);
-						stops.push_back(move(stop_name));
-
-						start_stop_name_pos = query.find_first_not_of(' ', separator_pos + 1);
-						separator_pos = query.find_first_of('>', separator_pos + 1);
-					}
-					std::string stop_name = query.substr(
-						start_stop_name_pos,
-						query.find_last_not_of(' ') - start_stop_name_pos + 1);
-					stops.push_back(move(stop_name));
-					//std::cout << start_stop_name_pos << std::endl;
-					//input.AddBus(move(bus_name)) = move(stops);
-				}
-				/*for (auto& c : stops) {
-					std::cout << '!' << c << '!' << std::endl;
-				}*/
-				if (size_t separator_pos = query.find('-'); separator_pos != std::string::npos) {
-					size_t start_stop_name_pos = query.find_first_not_of(' ', colon_pos + 1);
-					while (separator_pos != std::string::npos) {
-						std::string stop_name = query.substr(
-							start_stop_name_pos,
-							query.find_last_not_of(' ', separator_pos - 1) - start_stop_name_pos + 1);
-						stops.push_back(move(stop_name));
-
-						start_stop_name_pos = query.find_first_not_of(' ', separator_pos + 1);
-						separator_pos = query.find_first_of('-', separator_pos + 1);
-					}
-					std::string stop_name = query.substr(
-						start_stop_name_pos,
-						query.find_last_not_of(' ') - start_stop_name_pos + 1);
-					stops.push_back(move(stop_name));
-					for (size_t i = stops.size() - 1; i > 0; --i) {
-						stops.push_back(stops[i - 1]);
-					}
-					//std::cout << start_stop_name_pos << std::endl;
-					//input.AddBus(move(bus_name)) = move(stops);
-				}
-				input.AddBus(move(bus_name)) = move(stops);
-
+				input.buses_query_[move(ParseToName(query, start_name, colon_pos))] =
+					ParseToStopsName(query, colon_pos);
 			}
-
 		}
 
 		return input;
 	}
-	std::vector<std::string> ParseQueryToStopsName(std::string& query)
+
+	string ParseToName(const string& query, size_t start_name, size_t colon_pos)
 	{
-		return std::vector<std::string>();
+		string stop_name = query.substr(
+			start_name,
+			query.find_last_not_of(' ', colon_pos - 1) - start_name + 1);
+		//std::cout <<'!'<< stop_name<<'!' << std::endl;
+		return stop_name;
+		
+	}
+
+	pair<double, double> ParseToCoordinates(const string& query,
+		size_t colon_pos, size_t comma_pos) {
+		double lat = stod(query.substr(
+			colon_pos + 1,
+			comma_pos - colon_pos
+		));
+		double lng = stod(query.substr(
+			comma_pos + 1
+		));
+		return { lat, lng };;
+	}
+
+	vector<string> ParseToStopsName(string& query, size_t colon_pos)
+	{
+		vector<string> stops;
+		
+		if (size_t separator_pos = query.find_first_of(">-"); separator_pos != string::npos) {
+			size_t start_stop_name_pos = query.find_first_not_of(' ', colon_pos + 1);
+			while (separator_pos != string::npos) {
+				string stop_name = query.substr(
+					start_stop_name_pos,
+					query.find_last_not_of(' ', separator_pos - 1) - start_stop_name_pos + 1);
+				stops.push_back(move(stop_name));
+
+				start_stop_name_pos = query.find_first_not_of(' ', separator_pos + 1);
+				separator_pos = query.find_first_of(">-", separator_pos + 1);
+			}
+			string stop_name = query.substr(
+				start_stop_name_pos,
+				query.find_last_not_of(' ') - start_stop_name_pos + 1);
+			stops.push_back(move(stop_name));
+		}
+		// ≈сли остановки заданы форматом A - B - C
+		if (query.find('-') != string::npos) {
+			for (size_t i = stops.size() - 1; i > 0; --i) {
+				stops.push_back(stops[i - 1]);
+			}
+		}
+		return stops;
 	}
 }

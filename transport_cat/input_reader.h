@@ -9,24 +9,24 @@ namespace input_reader {
 	int ReadLineWithNumber();
 	std::vector<std::string> ParseQueriesToVector();
 
+	using StopsQuery = std::unordered_map<std::string, std::pair<double, double>>;
+	using BusesQuery = std::unordered_map<std::string, std::vector<std::string>>;
 
-	class InputReader {
-	public:
-		std::pair<double, double>& AddStop(std::string name);
-		std::vector<std::string>& AddBus(std::string name);
-
-		std::unordered_map<std::string, std::pair<double, double>>& GetStopsQuery();
-		std::unordered_map<std::string, std::vector<std::string>>& GetBusesQuery();
-
-	private:
-		std::unordered_map<std::string, std::pair<double, double>> stops_query_;
-		std::unordered_map<std::string, std::vector<std::string>> buses_query_;
+	struct InputReader {
+		
+		StopsQuery stops_query_;
+		BusesQuery buses_query_;
 	};
-
 
 	InputReader Load();
 
-	std::vector<std::string> ParseQueryToStopsName(std::string& query);
+	std::string ParseToName(const std::string& query, size_t start_name, size_t colon_pos);
+	
+	std::pair<double, double> ParseToCoordinates(const std::string& query,
+		size_t colon_pos, size_t comma_pos);
+
+	std::vector<std::string> ParseToStopsName (std::string& query, size_t colon_pos);
+	
 }
 
 
