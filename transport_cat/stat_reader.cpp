@@ -2,22 +2,43 @@
 
 namespace stat_reader {
 
-	std::string_view ParseToBusName(std::string_view query) {
-		size_t start_name_pos = query.find_first_not_of(' ', 3);
+	std::string_view ParseToName(std::string_view query)
+	{
+		// следующий символ после Bus или Stop
+		size_t first_spase = query.find_first_of(' ');
+		size_t start_name_pos = query.find_first_not_of(' ', first_spase);
 		return(query.substr(
 			start_name_pos,
 			query.find_last_not_of(' ') - start_name_pos + 1
 		));
 	}
-
-	void OutputStat(std::string_view name, size_t stop_count, size_t unique_stop_count, double distance)
+	void OutputStat(const BusInfo& bus_info)
 	{
-		if (stop_count == 0){
-			std::cout << "Bus " << name << ": not found" << std::endl;
+		if (bus_info.stops_count == 0){
+			std::cout << "Bus " << bus_info.name << ": not found" << std::endl;
 		}
 		else {
-			std::cout << std::setprecision(6) << "Bus " << name << ": " << stop_count << " stops on route, "
-				<< unique_stop_count << " unique stops, " << distance << " route length" << std::endl;
+			std::cout << std::setprecision(6) << "Bus " << bus_info.name << ": "
+				<< bus_info.stops_count << " stops on route, "
+				<< bus_info.unique_stops_count << " unique stops, "
+				<< bus_info.distance << " route length" << std::endl;
+		}
+	}
+	void OutputBusesForStop(std::string_view name, const StopInfo& stop_info)
+	{
+		std::cout << "Stop " << name;
+		if (stop_info.name.empty()) {
+			std::cout << ": not found" << std::endl;
+		}
+		else if (stop_info.stops_to_buses_.size()==0) {
+			std::cout << ": no buses" << std::endl;
+		}
+		else {
+			std::cout << ": buses";
+			for (auto& bus : stop_info.stops_to_buses_) {
+				std::cout << ' ' << bus;
+			}
+			std::cout << std::endl;
 		}
 	}
 }

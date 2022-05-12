@@ -64,60 +64,51 @@ int main()
             }
         }
     }
-    auto stat = input_reader::ParseQueriesToVector();
-    {
-        LOG_DURATION("GetInfo");
-        for (const auto& query : stat) {
-            auto bus_name = stat_reader::ParseToBusName(query);
-            auto bus_info = catalogue.GetBusInfo(bus_name);
-            stat_reader::OutputStat(bus_name, bus_info.stops_count, bus_info.unique_stops_count,
-                bus_info.distance);
-        }
-    }
 
     
-    /*input_reader::InputReader input = input_reader::Load();
-    {   LOG_DURATION("Test of AddStop");
-        for (const auto& stop : input.stops_query_) {
-        catalogue.AddStop(stop.first, stop.second.first, stop.second.second);
-    }
-    }
+    auto stat = input_reader::ParseQueriesToVector();
     {
-        LOG_DURATION("Test of AddBus");
-        for (const auto& bus : input.buses_query_) {
-            catalogue.AddBus(bus.first, bus.second);
+        for (const auto& query : stat) {
+
+            if (input_reader::IsBusQuery(query)) {
+                auto bus_info = catalogue.GetBusInfo(stat_reader::ParseToName(query));
+                stat_reader::OutputStat(bus_info);
+            }
+            else {
+                auto stop_name = stat_reader::ParseToName(query);
+                auto stop_info = catalogue.GetBusesForStop(stop_name);
+                stat_reader::OutputBusesForStop(stop_name, stop_info);
+            }
         }
     }
-
-
-    stat_reader::StatReader stat = stat_reader::Load(input_reader::ParseQueriesToVector());
-    for (const auto& bus : stat.GetBusesName()) {
-        auto [count_stops, count_unique_stops, length] = catalogue.GetBusInfo(bus);
-        stat_reader::OutputStat(bus, count_stops, count_unique_stops, length);
-    }*/
-
-
 }
 
 /*
 
 =======================Ввод данных========================
 
-10
-Stop Tolstopaltsevo: 55.611087, 37.208290
+13
+Stop Tolstopaltsevo: 55.611087, 37.20829
 Stop Marushkino: 55.595884, 37.209755
 Bus 256: Biryulyovo Zapadnoye > Biryusinka > Universam > Biryulyovo Tovarnaya > Biryulyovo Passazhirskaya > Biryulyovo Zapadnoye
 Bus 750: Tolstopaltsevo - Marushkino - Rasskazovka
 Stop Rasskazovka: 55.632761, 37.333324
-Stop Biryulyovo Zapadnoye: 55.574371, 37.651700
-Stop Biryusinka: 55.581065, 37.648390
+Stop Biryulyovo Zapadnoye: 55.574371, 37.6517
+Stop Biryusinka: 55.581065, 37.64839
 Stop Universam: 55.587655, 37.645687
 Stop Biryulyovo Tovarnaya: 55.592028, 37.653656
 Stop Biryulyovo Passazhirskaya: 55.580999, 37.659164
-3
+Bus 828: Biryulyovo Zapadnoye > Universam > Rossoshanskaya ulitsa > Biryulyovo Zapadnoye
+Stop Rossoshanskaya ulitsa: 55.595579, 37.605757
+Stop Prazhskaya: 55.611678, 37.603831
+6
 Bus 256
 Bus 750
 Bus 751
+Stop Samara
+Stop Prazhskaya
+Stop Biryulyovo Zapadnoye
+
 
 */
 
@@ -128,5 +119,8 @@ Bus 751
 Bus 256: 6 stops on route, 5 unique stops, 4371.02 route length
 Bus 750: 5 stops on route, 3 unique stops, 20939.5 route length
 Bus 751: not found
+Stop Samara: not found
+Stop Prazhskaya: no buses
+Stop Biryulyovo Zapadnoye: buses 256 828
 
 */

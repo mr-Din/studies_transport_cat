@@ -19,7 +19,6 @@ namespace input_reader {
 	// формируем вектор из запросов
 	vector<string> ParseQueriesToVector() {
 		int query_count = ReadLineWithNumber();
-		LOG_DURATION("Test of ParseQueriesToVector");
 		vector<string> queries;
 		queries.reserve(query_count);
 		for (int i = 0; i < query_count; ++i) {
@@ -107,6 +106,5 @@ namespace input_reader {
 			}
 		}
 		return stops;
-	}
-	
+	}	
 }
