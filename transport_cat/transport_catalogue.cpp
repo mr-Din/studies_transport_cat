@@ -9,14 +9,15 @@ void TransportCatalogue::AddStop(const string_view stop_name, const Coordinates 
 	stops_.push_back({ stop_name, { coordinates.lat, coordinates.lng} });
 	// добавляем остановку в stopname_to_stop_
 	stopname_to_stop_[stops_.back().name] = &stops_.back();
+	
 	// добавление расстояния до других остановок
 
-	for (const auto& [name, stop] : stopname_to_stop_) {
+	/*for (const auto& [name, stop] : stopname_to_stop_) {
 		distance_[{&stops_.back(), stop}] =
 			ComputeDistance(stops_.back().coordinates, stop->coordinates);
 		distance_[{stop,  &stops_.back() }] =
 			ComputeDistance(stop->coordinates, stops_.back().coordinates);
-	}
+	}*/
 
 }
 
@@ -34,14 +35,7 @@ void TransportCatalogue::AddBus(string_view bus_name,
 		bus.push_back(stopname_to_stop_[stop_name]);
 	}*/
 
-	// расстояние маршрута
-	double distance = 0.0;
-	//for (auto it = bus.begin(); it != bus.end()-1; ++it) {
-	for (size_t i = 0; i < bus.size() - 1;++i) {
-		//distance += distance_.at({ *it, *(it+1) });
-		distance += distance_[{bus[i], bus[i + 1]}];
-	}
-	buses_.push_back({ bus_name, bus, distance });
+	buses_.push_back({ bus_name, bus});
 
 	// добавление индекса (имя маршрута - указатель на маршрут)
 	busname_to_bus_[buses_.back().name] = &buses_.back();
@@ -71,14 +65,24 @@ const Stop& TransportCatalogue::FindStop(std::string_view stop_name)
 
 BusInfo TransportCatalogue::GetBusInfo(std::string_view bus_name)
 {
+	
 	auto& bus = FindBus(bus_name);
 	size_t stops_count = bus.bus.size();
-	double length = bus.distance;
+	// расстояние маршрута
+	double distance = 0.0;
+	if (stops_count > 0) {
+		/*for (size_t i = 0; i < stops_count - 1;++i) {
+			distance += distance_[{bus.bus[i], bus.bus[i + 1]}];
+		}*/
+		for (size_t i = 0; i < stops_count - 1;++i) {
+			distance += ComputeDistance(bus.bus[i]->coordinates, bus.bus[i + 1]->coordinates);
+		}
+	}
 
 	// уникальные значения через set
 	std::unordered_set<const Stop*> unique_stops(bus.bus.begin(), bus.bus.end());
 	size_t unique_stops_count = unique_stops.size();
-	return { stops_count, unique_stops_count, length };
+	return { stops_count, unique_stops_count, distance };
 }
 
 

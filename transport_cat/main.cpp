@@ -51,23 +51,28 @@ int main()
     // Вызов ввода числа запросов, самих запросов и заполнение базы запросов!
     auto input = input_reader::ParseQueriesToVector();
     sort(input.begin(), input.end(), std::greater<std::string>());
-    for (const auto& query : input) {
-        if (input_reader::IsStopQuery(query)) {
-            auto data_for_stop = input_reader::ParseToStop(query);
-            catalogue.AddStop(data_for_stop.name, data_for_stop.coordinate);
-        }
-        else if (input_reader::IsBusQuery(query)) {
-            auto data_for_bus = input_reader::ParseToBus(query);
-            catalogue.AddBus(data_for_bus.name, data_for_bus.stops);
+    {    
+        LOG_DURATION("AddStopAndBus");
+        for (const auto& query : input) {
+            if (input_reader::IsStopQuery(query)) {
+                auto data_for_stop = input_reader::ParseToStop(query);
+                catalogue.AddStop(data_for_stop.name, data_for_stop.coordinate);
+            }
+            else if (input_reader::IsBusQuery(query)) {
+                auto data_for_bus = input_reader::ParseToBus(query);
+                catalogue.AddBus(data_for_bus.name, data_for_bus.stops);
+            }
         }
     }
-
     auto stat = input_reader::ParseQueriesToVector();
-    for (const auto& query : stat) {
-        auto bus_name = stat_reader::ParseToBusName(query);
-        auto bus_info = catalogue.GetBusInfo(bus_name);
-        stat_reader::OutputStat(bus_name, bus_info.stops_count, bus_info.unique_stops_count,
-            bus_info.distance);
+    {
+        LOG_DURATION("GetInfo");
+        for (const auto& query : stat) {
+            auto bus_name = stat_reader::ParseToBusName(query);
+            auto bus_info = catalogue.GetBusInfo(bus_name);
+            stat_reader::OutputStat(bus_name, bus_info.stops_count, bus_info.unique_stops_count,
+                bus_info.distance);
+        }
     }
 
     

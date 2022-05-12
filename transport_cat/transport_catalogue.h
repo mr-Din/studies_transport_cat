@@ -24,7 +24,7 @@ struct Stop {
 struct Bus {	// маршрут
 	std::string_view name;
 	std::vector<const Stop*> bus;
-	double distance;
+	//double distance;
 };
 
 struct BusInfo {
@@ -35,9 +35,9 @@ struct BusInfo {
 
 struct PairStopsHasher {
 	size_t operator()(const std::pair<const Stop*, const Stop*>& stops) const {
-		return hasher(std::string(stops.first->name) + std::string(stops.second->name));
+		return hasher(stops.first) + hasher(stops.first)*37;
 	}
-	std::hash<std::string> hasher;
+	std::hash<const void*> hasher;
 };
 
 class TransportCatalogue {
@@ -68,5 +68,6 @@ private:
 	// имя маршрута-указатель на маршрут:
 	std::unordered_map<std::string_view, const Bus*> busname_to_bus_;
 	// расстояние между остановками:
-	std::unordered_map<std::pair<const Stop*, const Stop*>, double, PairStopsHasher> distance_;
+	//std::unordered_map<std::pair<const Stop*, const Stop*>, double, PairStopsHasher> distance_;
+	// 
 };
