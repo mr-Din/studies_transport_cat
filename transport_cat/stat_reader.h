@@ -6,8 +6,11 @@
 #include <vector>
 #include <iomanip>
 
-namespace stat_reader {
-	std::string_view ParseToName(std::string_view query);
-	void OutputStat(const BusInfo& bus_info);
-	void OutputBusesForStop(std::string_view name, const StopInfo& stop_info);
+namespace catalogue {
+	namespace stat_reader {
+		std::string_view ParseToName(std::string_view query);
+		void OutputStat(const BusInfo& bus_info);
+		void OutputBusesForStop(std::string_view name, const StopInfo& stop_info);
+		void DisplayInformation(TransportCatalogue& catalogue);
+	}
 }
