@@ -3,7 +3,7 @@
 using namespace std;
 
 
-void TransportCatalogue::AddStop(const string_view stop_name, const Coordinates coordinates)
+void TransportCatalogue::AddStop(string_view stop_name, const Coordinates coordinates)
 {
 	// добавляем остановку в stops_
 	stops_.push_back({ stop_name, { coordinates.lat, coordinates.lng} });
@@ -69,19 +69,23 @@ BusInfo TransportCatalogue::GetBusInfo(std::string_view bus_name)
 {	
 	auto bus = FindBus(bus_name);
 	// расстояние маршрута
-	double distance = 0.0;
+	int distance = 0;
+	double curvature = 0.0;
+	double geo_distance = 0.0;
 	size_t stops_count = 0;
 	size_t unique_stops_count = 0;
 	if (bus) {
 		stops_count = bus->bus.size();
 		for (size_t i = 0; i < stops_count - 1;++i) {
-			distance += ComputeDistance(bus->bus[i]->coordinates, bus->bus[i + 1]->coordinates);
+			geo_distance += ComputeDistance(bus->bus[i]->coordinates, bus->bus[i + 1]->coordinates);
+			distance += GetDistanceBetweenStops(bus->bus[i]->name, bus->bus[i + 1]->name);
 		}
+		curvature = static_cast<double>(distance) / geo_distance;
 		// уникальные значения через set
 		std::unordered_set<const Stop*> unique_stops(bus->bus.begin(), bus->bus.end());
 		unique_stops_count = unique_stops.size();
 	}
-	return { bus_name, stops_count, unique_stops_count, distance };
+	return { bus_name, stops_count, unique_stops_count, distance, curvature };
 }
 
 StopInfo TransportCatalogue::GetBusesForStop(std::string_view stop_name)
@@ -94,6 +98,29 @@ StopInfo TransportCatalogue::GetBusesForStop(std::string_view stop_name)
 		return empty_res;
 	}
 	return { stop_name, iter->second };
+}
+
+void TransportCatalogue::AddDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to, int distance)
+{
+	// добавление расстояния в поле std::unordered_map<std::pair<const Stop*, const Stop*>, double, PairStopsHasher> distance_;
+	// 1. Проверяем, если ли указанные остановки
+	auto stop_from = FindStop(stop_name_from);
+	auto stop_to = FindStop(stop_name_to);
+	if (stop_from && stop_to) {
+		distance_[{stop_from, stop_to}] = distance;
+		if (!distance_.count({ stop_to, stop_from })) {
+			distance_[{stop_to, stop_from}] = distance;
+		}
+	}
+}
+
+int TransportCatalogue::GetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to)
+{
+	auto iter = distance_.find({ FindStop(stop_name_from), FindStop(stop_name_to) });
+	if (iter == distance_.end()) {
+		return 0.0;
+	}
+	return iter->second;
 }
 
 void TransportCatalogue::AddBusToStops(const Bus* added_bus) {

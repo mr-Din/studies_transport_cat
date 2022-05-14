@@ -6,6 +6,54 @@
 
 using namespace std;
 
+void FillTransportCatalogue(TransportCatalogue& catalogue, vector<string>& input) {
+    // вектор с именами остановок из запросов (для добавления по ним расстояний)
+    vector<string_view> names_of_stops;
+
+    for (const auto& query : input) {
+        if (input_reader::IsStopQuery(query)) {
+            auto data_for_stop = input_reader::ParseToStop(query);
+            catalogue.AddStop(data_for_stop.name, data_for_stop.coordinate);
+            names_of_stops.push_back(data_for_stop.name);
+        }
+        else if (input_reader::IsBusQuery(query)) {
+            auto data_for_bus = input_reader::ParseToBus(query);
+            catalogue.AddBus(data_for_bus.name, data_for_bus.stops);
+        }
+    }
+
+    // добавление информации о расстояниях между остановками
+    for (const auto& query : input) {
+        if (input_reader::IsStopQuery(query)) {
+            // получаем из запроса Остановку и вектор пар vector<pair<double distance, string_view stop_to>>
+            auto distances_from_stop = input_reader::ParseToDistanceToStops(query);
+            // добавляем расстояния между остановками
+            for (const auto& dictance_data : distances_from_stop) {
+
+                catalogue.AddDistanceBetweenStops(dictance_data.stop_name_from,
+                    dictance_data.stop_name_to, dictance_data.distance);
+
+            }
+
+        }
+    }
+}
+
+void DisplayInformation(TransportCatalogue& catalogue, vector<string>& stat) {
+    for (const auto& query : stat) {
+
+        if (input_reader::IsBusQuery(query)) {
+            auto bus_info = catalogue.GetBusInfo(stat_reader::ParseToName(query));
+            stat_reader::OutputStat(bus_info);
+        }
+        else {
+            auto stop_name = stat_reader::ParseToName(query);
+            auto stop_info = catalogue.GetBusesForStop(stop_name);
+            stat_reader::OutputBusesForStop(stop_name, stop_info);
+        }
+    }
+}
+
 int main()
 {
     TransportCatalogue catalogue;
@@ -51,36 +99,10 @@ int main()
     // Вызов ввода числа запросов, самих запросов и заполнение базы запросов!
     auto input = input_reader::ParseQueriesToVector();
     sort(input.begin(), input.end(), std::greater<std::string>());
-    {    
-        LOG_DURATION("AddStopAndBus");
-        for (const auto& query : input) {
-            if (input_reader::IsStopQuery(query)) {
-                auto data_for_stop = input_reader::ParseToStop(query);
-                catalogue.AddStop(data_for_stop.name, data_for_stop.coordinate);
-            }
-            else if (input_reader::IsBusQuery(query)) {
-                auto data_for_bus = input_reader::ParseToBus(query);
-                catalogue.AddBus(data_for_bus.name, data_for_bus.stops);
-            }
-        }
-    }
-
+    FillTransportCatalogue(catalogue, input);
     
     auto stat = input_reader::ParseQueriesToVector();
-    {
-        for (const auto& query : stat) {
-
-            if (input_reader::IsBusQuery(query)) {
-                auto bus_info = catalogue.GetBusInfo(stat_reader::ParseToName(query));
-                stat_reader::OutputStat(bus_info);
-            }
-            else {
-                auto stop_name = stat_reader::ParseToName(query);
-                auto stop_info = catalogue.GetBusesForStop(stop_name);
-                stat_reader::OutputBusesForStop(stop_name, stop_info);
-            }
-        }
-    }
+    DisplayInformation(catalogue, stat);
 }
 
 /*
@@ -88,16 +110,16 @@ int main()
 =======================Ввод данных========================
 
 13
-Stop Tolstopaltsevo: 55.611087, 37.20829
-Stop Marushkino: 55.595884, 37.209755
+Stop Tolstopaltsevo: 55.611087, 37.20829, 3900m to Marushkino
+Stop Marushkino: 55.595884, 37.209755, 9900m to Rasskazovka, 100m to Marushkino
 Bus 256: Biryulyovo Zapadnoye > Biryusinka > Universam > Biryulyovo Tovarnaya > Biryulyovo Passazhirskaya > Biryulyovo Zapadnoye
-Bus 750: Tolstopaltsevo - Marushkino - Rasskazovka
-Stop Rasskazovka: 55.632761, 37.333324
-Stop Biryulyovo Zapadnoye: 55.574371, 37.6517
-Stop Biryusinka: 55.581065, 37.64839
-Stop Universam: 55.587655, 37.645687
-Stop Biryulyovo Tovarnaya: 55.592028, 37.653656
-Stop Biryulyovo Passazhirskaya: 55.580999, 37.659164
+Bus 750: Tolstopaltsevo - Marushkino - Marushkino - Rasskazovka
+Stop Rasskazovka: 55.632761, 37.333324, 9500m to Marushkino
+Stop Biryulyovo Zapadnoye: 55.574371, 37.6517, 7500m to Rossoshanskaya ulitsa, 1800m to Biryusinka, 2400m to Universam
+Stop Biryusinka: 55.581065, 37.64839, 750m to Universam
+Stop Universam: 55.587655, 37.645687, 5600m to Rossoshanskaya ulitsa, 900m to Biryulyovo Tovarnaya
+Stop Biryulyovo Tovarnaya: 55.592028, 37.653656, 1300m to Biryulyovo Passazhirskaya
+Stop Biryulyovo Passazhirskaya: 55.580999, 37.659164, 1200m to Biryulyovo Zapadnoye
 Bus 828: Biryulyovo Zapadnoye > Universam > Rossoshanskaya ulitsa > Biryulyovo Zapadnoye
 Stop Rossoshanskaya ulitsa: 55.595579, 37.605757
 Stop Prazhskaya: 55.611678, 37.603831
@@ -116,8 +138,8 @@ Stop Biryulyovo Zapadnoye
 
 =======================Вывод данных========================
 
-Bus 256: 6 stops on route, 5 unique stops, 4371.02 route length
-Bus 750: 5 stops on route, 3 unique stops, 20939.5 route length
+Bus 256: 6 stops on route, 5 unique stops, 5950 route length, 1.36124 curvature
+Bus 750: 7 stops on route, 3 unique stops, 27400 route length, 1.30853 curvature
 Bus 751: not found
 Stop Samara: not found
 Stop Prazhskaya: no buses

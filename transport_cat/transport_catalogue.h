@@ -32,7 +32,8 @@ struct BusInfo {
 	std::string_view name;
 	size_t stops_count;
 	size_t unique_stops_count;
-	double distance;
+	int distance;
+	double curvature;
 };
 
 struct StopInfo {
@@ -51,7 +52,7 @@ class TransportCatalogue {
 public:
 
 	//добавление остановки в базу,
-	void AddStop(const std::string_view stop_name, const Coordinates coordinates);
+	void AddStop(std::string_view stop_name, const Coordinates coordinates);
 	//добавление маршрута в базу,
 	void AddBus(std::string_view bus_name,
 		const std::vector<std::string_view>& stops_query);
@@ -62,6 +63,8 @@ public:
 	//получение информации о маршруте.
 	BusInfo GetBusInfo(std::string_view name);
 	StopInfo GetBusesForStop(std::string_view stop_name);
+	void AddDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to, int distance );
+	int GetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to);
 
 
 private:
@@ -74,11 +77,11 @@ private:
 	std::deque<Bus> buses_;
 	// имя маршрута-указатель на маршрут:
 	std::unordered_map<std::string_view, const Bus*> busname_to_bus_;
-	// расстояние между остановками:
-	//std::unordered_map<std::pair<const Stop*, const Stop*>, double, PairStopsHasher> distance_;
 	// ключ - остановка -> значение - маршруты этой остановки
 	//std::unordered_map<const Stop*, std::vector<const Bus*>> stops_to_buses_;
 	std::unordered_map<const Stop*, std::set<std::string_view>> stops_to_buses_;
+	// расстояние между остановками:
+	std::unordered_map<std::pair<const Stop*, const Stop*>, int, PairStopsHasher> distance_;
 
 	void AddBusToStops(const Bus*);
 };

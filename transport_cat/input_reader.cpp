@@ -42,10 +42,9 @@ namespace input_reader {
 	{
 		size_t start_name = query.find_first_not_of(' ', 4);
 		size_t colon_pos = query.find_first_of(':');
-		size_t comma_pos = query.find_first_of(',');
-		auto coordinates = ParseToCoordinates(query, colon_pos, comma_pos);
-		return { move(ParseToName(query, start_name, colon_pos)),
-			 coordinates.first, coordinates.second};
+		auto coordinates = ParseToCoordinates(query, colon_pos);
+		return { ParseToName(query, start_name, colon_pos),
+			 coordinates.first, coordinates.second };
 	}
 
 	DataForBus ParseToBus(string_view query)
@@ -68,13 +67,18 @@ namespace input_reader {
 	}
 
 	pair<double, double> ParseToCoordinates(string_view query,
-		size_t colon_pos, size_t comma_pos) {
+		size_t colon_pos) {
+		// позиция первой запятой в запросе (разделитель координат lat и lng)
+		size_t comma_pos = query.find_first_of(',');
+		// первая координата между colon_pos ':' и первой запятой ','
 		double lat = stod(string(query).substr(
 			colon_pos + 1,
 			comma_pos - colon_pos
 		));
+		// вторая координата между первой и второй запятой
+		size_t comma_pos_next = query.find_first_of(',', comma_pos + 1);
 		double lng = stod(string(query).substr(
-			comma_pos + 1
+			comma_pos + 1, comma_pos_next
 		));
 		return { lat, lng };
 	}
@@ -106,5 +110,39 @@ namespace input_reader {
 			}
 		}
 		return stops;
-	}	
+	}
+	vector<DataForDistance> ParseToDistanceToStops(std::string_view query)
+	{
+		vector<DataForDistance> distances;
+		// 1. Находим позицию после указания координат (ориентир на 2ю запятую)
+		// 2. Находим букву m и от неё в обратную сторону ищем пробел или запятую (значение между m и пробелом или запятой - расстояние)
+		// 3. Находим после m позицию to (методом find с позиции m)
+		// 4. С конца позиции to ищем первый непробельный символ и первый символ запятой
+		// 5. Между ними будет имя остановки до которой указано расстояние
+		// 6. Добавляем его в вектор
+		// 
+		// Повторяем цикл с позиции последней найденной запятой. Либо выходим из цикла, если позиция npos
+		size_t start_name = query.find_first_not_of(' ', 4);
+		size_t colon_pos = query.find_first_of(':');
+		auto stop_name_from = ParseToName(query, start_name, colon_pos);
+		
+		size_t pos_begin = query.find_first_of(',', query.find_first_of(',') + 1) + 1;	 // 1
+		pos_begin = query.find_first_not_of(' ', pos_begin);
+		while (pos_begin != string::npos && pos_begin != 0) {
+			size_t pos_end = query.find_first_of('m', pos_begin);
+			int distance = stoi(string(query).substr(pos_begin, pos_end - pos_begin));	// 2
+
+			pos_begin = query.find_first_not_of(' ', query.find("to"s, pos_end) + 2);
+			pos_end = query.find_last_not_of(' ', query.find_first_of(',', pos_end) - 1);
+			string_view stop_name_to = query.substr(pos_begin, pos_end - pos_begin + 1);
+
+			pos_begin = query.find_first_not_of(' ', query.find_first_of(',', pos_end) + 1);
+			distances.push_back({ stop_name_from, stop_name_to, distance });
+		}
+		
+		// Stop Biryulyovo Zapadnoye: 55.574371, 37.6517, 7500m to Rossoshanskaya ulitsa, 1800m to Biryusinka, 2400m to Universam
+
+		return distances;
+	}
+
 }

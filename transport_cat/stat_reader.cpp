@@ -21,8 +21,10 @@ namespace stat_reader {
 			std::cout << std::setprecision(6) << "Bus " << bus_info.name << ": "
 				<< bus_info.stops_count << " stops on route, "
 				<< bus_info.unique_stops_count << " unique stops, "
-				<< bus_info.distance << " route length" << std::endl;
+				<< bus_info.distance << " route length, "
+				<< bus_info.curvature << " curvature" << std::endl;
 		}
+		//Bus 256: 6 stops on route, 5 unique stops, 5950 route length, 1.36124 curvature
 	}
 	void OutputBusesForStop(std::string_view name, const StopInfo& stop_info)
 	{
