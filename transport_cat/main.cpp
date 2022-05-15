@@ -10,6 +10,9 @@ int main()
 {
     catalogue::TransportCatalogue catalogue;
 
-    catalogue::input_reader::FillTransportCatalogue(catalogue);
-    catalogue::stat_reader::DisplayInformation(catalogue);
+    auto input = catalogue::input_reader::ParseQueriesToVector(cin);
+    catalogue::input_reader::FillTransportCatalogue(catalogue, input);
+
+    auto stat = catalogue::input_reader::ParseQueriesToVector(cin);
+    catalogue::stat_reader::DisplayInformation(catalogue, stat);
 }

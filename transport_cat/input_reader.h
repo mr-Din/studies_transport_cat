@@ -25,10 +25,11 @@ namespace catalogue {
 		};
 
 		namespace detail {
-			std::string ReadLine();
-			int ReadLineWithNumber();
-			std::vector<std::string> ParseQueriesToVector();
+			std::string ReadLine(std::istream& input_query);
+			int ReadLineWithNumber(std::istream& input_query);
 		}
+
+		std::vector<std::string> ParseQueriesToVector(std::istream& input_query);
 
 		bool IsStopQuery(std::string_view query);
 		bool IsBusQuery(std::string_view query);
@@ -40,6 +41,6 @@ namespace catalogue {
 		std::vector<std::string_view> ParseToStopsName(std::string_view query, size_t colon_pos);
 		std::vector<DataForDistance> ParseToDistanceToStops(std::string_view query);
 
-		void FillTransportCatalogue(TransportCatalogue& catalogue);
+		void FillTransportCatalogue(TransportCatalogue& catalogue, std::vector<std::string>& input);
 	}
 }

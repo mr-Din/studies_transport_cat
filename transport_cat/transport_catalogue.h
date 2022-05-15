@@ -37,22 +37,20 @@ namespace catalogue {
 		std::string_view name;
 		std::set<std::string_view> stops_to_buses_;
 	};
-
-	struct PairStopsHasher {
-		size_t operator()(const std::pair<const Stop*, const Stop*>& stops) const {
-			return hasher(stops.first) + hasher(stops.first) * 37;
-		}
-		std::hash<const void*> hasher;
-	};
+	
+	namespace detail {
+		struct PairStopsHasher {
+			size_t operator()(const std::pair<const Stop*, const Stop*>& stops) const {
+				return hasher(stops.first) + hasher(stops.first) * 37;
+			}
+			std::hash<const void*> hasher;
+		};
+	}
 
 	class TransportCatalogue {
 	public:
 
-		void AddInputQueries(std::vector<std::string> queries);
-		void AddStatQueries(std::vector<std::string> queries);
-		const std::vector<std::string>& GetInputQueries() const;
-		const std::vector<std::string>& GetStatQueries() const;
-		void AddStop(std::string_view stop_name, const Coordinates coordinates);
+		void AddStop(std::string_view stop_name, const Coordinates& coordinates);
 		void AddBus(std::string_view bus_name,
 			const std::vector<std::string_view>& stops_query);
 
@@ -61,7 +59,7 @@ namespace catalogue {
 
 		BusInfo GetBusInfo(std::string_view name);
 		StopInfo GetBusesForStop(std::string_view stop_name);
-		void AddDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to, int distance);
+		void SetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to, int distance);
 		int GetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to);
 
 
@@ -72,11 +70,7 @@ namespace catalogue {
 		std::deque<Bus> buses_;
 		std::unordered_map<std::string_view, const Bus*> busname_to_bus_;
 		std::unordered_map<const Stop*, std::set<std::string_view>> stops_to_buses_;
-		std::unordered_map<std::pair<const Stop*, const Stop*>, int, PairStopsHasher> distance_;
+		std::unordered_map<std::pair<const Stop*, const Stop*>, int, detail::PairStopsHasher> distance_;
 
-		std::vector<std::string> input_queries_;
-		std::vector<std::string> stat_queries_;
-
-		void AddBusToStops(const Bus*);
 	};
 }

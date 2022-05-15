@@ -5,30 +5,32 @@ using namespace std;
 namespace catalogue {
 	namespace input_reader {
 		namespace detail {
-			string ReadLine() {
+			string ReadLine(std::istream& input_query) {
 				string s;
-				getline(cin, s);
+				getline(input_query, s);
 				return s;
 			}
 
-			int ReadLineWithNumber() {
+			int ReadLineWithNumber(std::istream& input_query) {
 				int result;
-				cin >> result;
-				ReadLine();
+				input_query >> result;
+				ReadLine(input_query);
 				return result;
 			}
 
-			vector<string> ParseQueriesToVector() {
-				int query_count = ReadLineWithNumber();
-				vector<string> queries;
-				queries.reserve(query_count);
-				for (int i = 0; i < query_count; ++i) {
-					string query = ReadLine();
-					queries.push_back(move(query));
-				}
-				return queries;
-			}
+			
 		} // namespace detail
+
+		vector<string> ParseQueriesToVector(std::istream& input_query) {
+			int query_count = detail::ReadLineWithNumber(input_query);
+			vector<string> queries;
+			queries.reserve(query_count);
+			for (int i = 0; i < query_count; ++i) {
+				string query = detail::ReadLine(input_query);
+				queries.push_back(move(query));
+			}
+			return queries;
+		}
 
 		bool IsStopQuery(string_view query) {
 			return !query.empty() && query[0] == 'S';
@@ -131,11 +133,10 @@ namespace catalogue {
 			return distances;
 		}
 
-		void FillTransportCatalogue(TransportCatalogue& catalogue) {
-			catalogue.AddInputQueries(detail::ParseQueriesToVector());
-			vector<string_view> names_of_stops;
-			const auto& input = catalogue.GetInputQueries();
+		void FillTransportCatalogue(TransportCatalogue& catalogue, vector<string>& input) {
+			sort(input.begin(), input.end(), std::greater<std::string>());
 
+			vector<string_view> names_of_stops;
 			for (const auto& query : input) {
 				if (input_reader::IsStopQuery(query)) {
 					auto data_for_stop = input_reader::ParseToStop(query);
@@ -153,7 +154,7 @@ namespace catalogue {
 					auto distances_from_stop = input_reader::ParseToDistanceToStops(query);
 
 					for (const auto& dictance_data : distances_from_stop) {
-						catalogue.AddDistanceBetweenStops(dictance_data.stop_name_from,
+						catalogue.SetDistanceBetweenStops(dictance_data.stop_name_from,
 							dictance_data.stop_name_to, dictance_data.distance);
 					}
 				}

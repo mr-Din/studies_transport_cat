@@ -1,5 +1,6 @@
 #include "stat_reader.h"
 #include "input_reader.h"
+
 namespace catalogue {
 	namespace stat_reader {
 
@@ -12,12 +13,12 @@ namespace catalogue {
 				);
 		}
 
-		void OutputStat(const BusInfo& bus_info) {
+		void OutputStat(const BusInfo& bus_info, std::ostream& out) {
 			if (bus_info.stops_count == 0) {
-				std::cout << "Bus " << bus_info.name << ": not found" << std::endl;
+				out << "Bus " << bus_info.name << ": not found" << std::endl;
 			}
 			else {
-				std::cout << std::setprecision(6) << "Bus " << bus_info.name << ": "
+				out << std::setprecision(6) << "Bus " << bus_info.name << ": "
 					<< bus_info.stops_count << " stops on route, "
 					<< bus_info.unique_stops_count << " unique stops, "
 					<< bus_info.distance << " route length, "
@@ -25,36 +26,34 @@ namespace catalogue {
 			}
 		}
 
-		void OutputBusesForStop(std::string_view name, const StopInfo& stop_info) {
-			std::cout << "Stop " << name;
+		void OutputBusesForStop(std::string_view name, const StopInfo& stop_info, std::ostream& out) {
+			out << "Stop " << name;
 			if (stop_info.name.empty()) {
-				std::cout << ": not found" << std::endl;
+				out << ": not found" << std::endl;
 			}
 			else if (stop_info.stops_to_buses_.size() == 0) {
-				std::cout << ": no buses" << std::endl;
+				out << ": no buses" << std::endl;
 			}
 			else {
-				std::cout << ": buses";
+				out << ": buses";
 				for (auto& bus : stop_info.stops_to_buses_) {
-					std::cout << ' ' << bus;
+					out << ' ' << bus;
 				}
-				std::cout << std::endl;
+				out << std::endl;
 			}
 		}
 
-		void DisplayInformation(TransportCatalogue& catalogue) {
-			catalogue.AddStatQueries(input_reader::detail::ParseQueriesToVector());
-			const auto& stat = catalogue.GetStatQueries();
+		void DisplayInformation(TransportCatalogue& catalogue, std::vector<std::string>& stat, std::ostream& out) {
 			for (const auto& query : stat) {
 
 				if (input_reader::IsBusQuery(query)) {
 					auto bus_info = catalogue.GetBusInfo(stat_reader::ParseToName(query));
-					stat_reader::OutputStat(bus_info);
+					stat_reader::OutputStat(bus_info, out);
 				}
 				else {
 					auto stop_name = stat_reader::ParseToName(query);
 					auto stop_info = catalogue.GetBusesForStop(stop_name);
-					stat_reader::OutputBusesForStop(stop_name, stop_info);
+					stat_reader::OutputBusesForStop(stop_name, stop_info, out);
 				}
 			}
 		}

@@ -4,24 +4,8 @@ using namespace std;
 
 
 namespace catalogue {
-	void TransportCatalogue::AddInputQueries(std::vector<std::string> query) {
-		input_queries_ = move(query);
-		sort(input_queries_.begin(), input_queries_.end(), std::greater<std::string>());
-	}
 
-	void TransportCatalogue::AddStatQueries(std::vector<std::string> query) {
-		stat_queries_ = move(query);
-	}
-
-	const std::vector<std::string>& TransportCatalogue::GetInputQueries() const {
-		return input_queries_;
-	}
-
-	const std::vector<std::string>& TransportCatalogue::GetStatQueries() const {
-		return stat_queries_;
-	}
-
-	void TransportCatalogue::AddStop(string_view stop_name, const Coordinates coordinates)
+	void TransportCatalogue::AddStop(string_view stop_name, const Coordinates& coordinates)
 	{
 		stops_.push_back({ stop_name, { coordinates.lat, coordinates.lng} });
 
@@ -45,7 +29,9 @@ namespace catalogue {
 
 		busname_to_bus_[buses_.back().name] = &buses_.back();
 
-		AddBusToStops(&buses_.back());
+		for (auto stop : buses_.back().bus) {
+			stops_to_buses_.at(stop).insert(buses_.back().name);
+		}
 	}
 
 	const Bus* TransportCatalogue::FindBus(std::string_view bus_name)
@@ -104,7 +90,7 @@ namespace catalogue {
 		return { stop_name, iter->second };
 	}
 
-	void TransportCatalogue::AddDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to, int distance)
+	void TransportCatalogue::SetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to, int distance)
 	{
 		auto stop_from = FindStop(stop_name_from);
 		auto stop_to = FindStop(stop_name_to);
@@ -123,11 +109,5 @@ namespace catalogue {
 			return 0.0;
 		}
 		return iter->second;
-	}
-
-	void TransportCatalogue::AddBusToStops(const Bus* added_bus) {
-		for (auto stop : added_bus->bus) {
-			stops_to_buses_.at(stop).insert(added_bus->name);
-		}
 	}
 }
