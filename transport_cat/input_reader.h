@@ -37,7 +37,7 @@ namespace catalogue {
 		DataForStop ParseToStop(std::string_view query);
 		DataForBus ParseToBus(std::string_view query);
 		std::string_view ParseToName(std::string_view query, size_t start_name, size_t colon_pos);
-		std::pair<double, double> ParseToCoordinates(std::string_view query, size_t colon_pos);
+		Coordinates ParseToCoordinates(std::string_view query, size_t colon_pos);
 		std::vector<std::string_view> ParseToStopsName(std::string_view query, size_t colon_pos);
 		std::vector<DataForDistance> ParseToDistanceToStops(std::string_view query);
 

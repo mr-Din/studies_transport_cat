@@ -45,7 +45,7 @@ namespace catalogue {
 			size_t colon_pos = query.find_first_of(':');
 			auto coordinates = ParseToCoordinates(query, colon_pos);
 			return { ParseToName(query, start_name, colon_pos),
-				 coordinates.first, coordinates.second };
+				 coordinates.lat, coordinates.lng };
 		}
 
 		DataForBus ParseToBus(string_view query) {
@@ -63,7 +63,7 @@ namespace catalogue {
 			return stop_name;
 		}
 
-		pair<double, double> ParseToCoordinates(string_view query,
+		Coordinates ParseToCoordinates(string_view query,
 			size_t colon_pos) {
 
 			size_t comma_pos = query.find_first_of(',');
