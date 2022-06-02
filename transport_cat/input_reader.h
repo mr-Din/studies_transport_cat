@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "log_duration.h"
 #include "transport_catalogue.h"
 
 namespace catalogue {
@@ -12,7 +11,7 @@ namespace catalogue {
 
 		struct DataForStop {
 			std::string_view name;
-			Coordinates coordinate;
+			geo::Coordinates coordinate;
 		};
 		struct DataForBus {
 			std::string_view name;
@@ -37,7 +36,7 @@ namespace catalogue {
 		DataForStop ParseToStop(std::string_view query);
 		DataForBus ParseToBus(std::string_view query);
 		std::string_view ParseToName(std::string_view query, size_t start_name, size_t colon_pos);
-		Coordinates ParseToCoordinates(std::string_view query, size_t colon_pos);
+		geo::Coordinates ParseToCoordinates(std::string_view query, size_t colon_pos);
 		std::vector<std::string_view> ParseToStopsName(std::string_view query, size_t colon_pos);
 		std::vector<DataForDistance> ParseToDistanceToStops(std::string_view query);
 

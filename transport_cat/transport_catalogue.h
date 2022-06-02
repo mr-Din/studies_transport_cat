@@ -1,6 +1,6 @@
 #pragma once
 #include "geo.h"
-#include "log_duration.h"
+#include "domain.h"
 
 #include <string>
 #include <string_view>
@@ -16,28 +16,7 @@
 #include <utility>
 
 namespace catalogue {
-	struct Stop {
-		std::string_view name;
-		Coordinates coordinates;
-	};
-	struct Bus {
-		std::string_view name;
-		std::vector<const Stop*> bus;
-	};
-
-	struct BusInfo {
-		std::string_view name;
-		size_t stops_count;
-		size_t unique_stops_count;
-		int distance;
-		double curvature;
-	};
-
-	struct StopInfo {
-		std::string_view name;
-		std::set<std::string_view> stops_to_buses_;
-	};
-	
+		
 	namespace detail {
 		struct PairStopsHasher {
 			size_t operator()(const std::pair<const Stop*, const Stop*>& stops) const {
@@ -50,17 +29,17 @@ namespace catalogue {
 	class TransportCatalogue {
 	public:
 
-		void AddStop(std::string_view stop_name, const Coordinates& coordinates);
+		void AddStop(std::string_view stop_name, const geo::Coordinates& coordinates);
 		void AddBus(std::string_view bus_name,
 			const std::vector<std::string_view>& stops_query);
 
-		const Bus* FindBus(std::string_view bus_name);
-		const Stop* FindStop(std::string_view stop_name);
+		const Bus* FindBus(std::string_view bus_name) const;
+		const Stop* FindStop(std::string_view stop_name) const;
 
 		BusInfo GetBusInfo(std::string_view name);
 		StopInfo GetBusesForStop(std::string_view stop_name);
 		void SetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to, int distance);
-		int GetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to);
+		int GetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to) const;
 
 
 	private:
@@ -71,6 +50,5 @@ namespace catalogue {
 		std::unordered_map<std::string_view, const Bus*> busname_to_bus_;
 		std::unordered_map<const Stop*, std::set<std::string_view>> stops_to_buses_;
 		std::unordered_map<std::pair<const Stop*, const Stop*>, int, detail::PairStopsHasher> distance_;
-
 	};
 }

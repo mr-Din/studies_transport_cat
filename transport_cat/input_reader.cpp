@@ -63,7 +63,7 @@ namespace catalogue {
 			return stop_name;
 		}
 
-		Coordinates ParseToCoordinates(string_view query,
+		geo::Coordinates ParseToCoordinates(string_view query,
 			size_t colon_pos) {
 
 			size_t comma_pos = query.find_first_of(',');

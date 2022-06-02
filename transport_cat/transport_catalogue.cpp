@@ -5,7 +5,7 @@ using namespace std;
 
 namespace catalogue {
 
-	void TransportCatalogue::AddStop(string_view stop_name, const Coordinates& coordinates)
+	void TransportCatalogue::AddStop(string_view stop_name, const geo::Coordinates& coordinates)
 	{
 		stops_.push_back({ stop_name, { coordinates.lat, coordinates.lng} });
 
@@ -34,7 +34,7 @@ namespace catalogue {
 		}
 	}
 
-	const Bus* TransportCatalogue::FindBus(std::string_view bus_name)
+	const Bus* TransportCatalogue::FindBus(std::string_view bus_name) const
 	{
 		static Bus* empty_res;
 
@@ -45,7 +45,7 @@ namespace catalogue {
 		return iter->second;
 	}
 
-	const Stop* TransportCatalogue::FindStop(std::string_view stop_name)
+	const Stop* TransportCatalogue::FindStop(std::string_view stop_name) const
 	{
 		static Stop* empty_res;
 
@@ -102,11 +102,11 @@ namespace catalogue {
 		}
 	}
 
-	int TransportCatalogue::GetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to)
+	int TransportCatalogue::GetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to) const
 	{
 		auto iter = distance_.find({ FindStop(stop_name_from), FindStop(stop_name_to) });
 		if (iter == distance_.end()) {
-			return 0.0;
+			return 0;
 		}
 		return iter->second;
 	}
