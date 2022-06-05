@@ -14,7 +14,6 @@ namespace json {
 	using Dict = std::map<std::string, Node>;
 	using Array = std::vector<Node>;
 
-	// Эта ошибка выбрасывается при ошибках парсинга JSON
 	class ParsingError : public std::runtime_error {
 	public:
 		using runtime_error::runtime_error;
@@ -85,7 +84,6 @@ namespace json {
 
 	Document Load(std::istream& input);
 
-	/*===========================================*/
 	struct PrintContext {
 		std::ostream& out;
 		int indent_step = 4;
@@ -104,73 +102,16 @@ namespace json {
 
 	template <typename Value>
 	inline void PrintValue(const Value& value, const PrintContext& ctx) {
-		ctx.PrintIndent();
 		ctx.out << value;
 	}
 
-	inline void PrintValue(std::nullptr_t, const PrintContext& ctx) {
-		ctx.PrintIndent();
-		ctx.out << "null"sv;
-	}
+	void PrintValue(std::nullptr_t, const PrintContext& ctx);
+	void PrintValue(const bool& value, const PrintContext& ctx);
+	void PrintValue(const std::string& value, const PrintContext& ctx);
+	void PrintValue(const Array& array, const PrintContext& ctx);
+	void PrintValue(const Dict& dict, const PrintContext& ctx);
 
-	inline void PrintValue(const bool& value, const PrintContext& ctx) {
-		ctx.PrintIndent();
-		ctx.out << std::boolalpha << value;
-	}
-
-	inline void PrintValue(const std::string& value, const PrintContext& ctx) {
-		ctx.PrintIndent();
-		ctx.out << "\""sv;
-		for (const char c : value) {
-			if (c == '\r') {
-				ctx.out << "\\r"sv;
-			}
-			else if (c == '\n') {
-				ctx.out << "\\n"sv;
-			}
-			else if (c == '\\'|| c =='\"') {
-				ctx.out << "\\"sv;
-				ctx.out << c;
-			}
-			else {
-				ctx.out << c;
-			}
-		}
-		ctx.out << "\""sv;
-	}
-
-	void PrintNode(const Node&, const PrintContext& ctx);
-	inline void PrintValue(const Array& array, const PrintContext& ctx) {
-		ctx.PrintIndent();
-		ctx.out << "[\n"sv;
-		for (size_t i = 0; i < array.size(); ++i) {
-			if (i > 0) { ctx.out << ",\n"sv; }
-			PrintNode(array[i], ctx.Indented());
-		}
-		ctx.out << "\n]"sv;
-	}
-	inline void PrintValue(const Dict& dict, const PrintContext& ctx) {
-		ctx.PrintIndent();
-		ctx.out << "{\n"sv;
-		int i = 0;
-		for (const auto& [key, value] : dict) {
-			if (i > 0) {
-				ctx.out << ",\n"s;
-			}
-			++i;
-
-			PrintNode(key, ctx.Indented());
-			ctx.out << ":"sv;
-			PrintNode(value, ctx);
-		}
-		ctx.out << "\n}"sv;
-	}
-	inline void PrintNode(const Node& node, const PrintContext& ctx) {
-		std::visit(
-			[&ctx](const auto& value) { PrintValue(value, ctx);},
-			node.GetValue());
-	}
-	/*===========================================*/
+	void PrintNode(const Node& node, const PrintContext& ctx);
 
 	void Print(const Document& doc, std::ostream& output);
 

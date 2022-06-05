@@ -2,6 +2,7 @@
 using namespace std::literals;
 namespace catalogue {
     namespace json_reader {
+
         void FillStopsFromQuery(const json::Dict& query_map, DataFromJson& data_from_json)
         {
             DataForStop data_for_stop;
@@ -11,7 +12,6 @@ namespace catalogue {
             data_for_stop.coordinate.lng = query_map.at("longitude").AsDouble();
             data_from_json.stops.push_back(std::move(data_for_stop));
 
-            // необходимо учесть road_distance
             auto& distance_map = query_map.at("road_distances").AsMap();
             for (auto& [to_stop, dist] : distance_map) {
 
@@ -33,7 +33,6 @@ namespace catalogue {
                 data_for_bus.stops.push_back(data_for_bus.stops_str.back());
             }
 
-            // Если маршрут не круговой: ABC (ABCBA)
             if (!query_map.at("is_roundtrip").AsBool()) {
 
                 int size_data_for_bus = static_cast<int>(data_for_bus.stops.size());
@@ -46,48 +45,92 @@ namespace catalogue {
             data_from_json.buses.push_back(std::move(data_for_bus));
         }
 
+        void FillStatRequests(const json::Array& stat_queries, DataFromJson& data_from_json) {
+            for (auto& query : stat_queries) {
+                auto& query_map = query.AsMap();
+                if (query_map.count("name"s)) {
+                    data_from_json.stat_requests.push_back({
+                        query_map.at("id"s).AsInt(),
+                        query_map.at("name"s).AsString(),
+                        query_map.at("type"s).AsString()
+                        });
+                }
+                else {
+                    data_from_json.stat_requests.push_back({
+                        query_map.at("id"s).AsInt(),
+                        ""s,
+                        query_map.at("type"s).AsString()
+                        });
+                }
+            }
+        }
+
+        void FillRenderRequests(const json::Dict& query_map, DataFromJson& data_from_json) {
+            auto& render_settings = data_from_json.render_settings;
+
+            for (const auto& [param, value] : query_map) {
+                if (param == "width"s) { render_settings.width = value.AsDouble(); }
+                else if (param == "height"s) { render_settings.height = value.AsDouble(); }
+                else if (param == "padding"s) { render_settings.padding = value.AsDouble(); }
+                else if (param == "stop_radius"s) { render_settings.stop_radius = value.AsDouble(); }
+                else if (param == "line_width"s) { render_settings.line_width = value.AsDouble(); }
+                else if (param == "bus_label_font_size"s) { render_settings.bus_label_font_size = value.AsInt(); }
+                else if (param == "bus_label_offset"s) {
+                    render_settings.bus_label_offset.x = value.AsArray()[0].AsDouble();
+                    render_settings.bus_label_offset.y = value.AsArray()[1].AsDouble();
+                }
+                else if (param == "stop_label_font_size"s) { render_settings.stop_label_font_size = value.AsInt(); }
+                else if (param == "stop_label_offset"s) {
+                    render_settings.stop_label_offset.x = value.AsArray()[0].AsDouble();
+                    render_settings.stop_label_offset.y = value.AsArray()[1].AsDouble();
+                }
+
+                else if (param == "underlayer_color"s) {
+                    render_settings.underlayer_color = FormatColorForSvg(value);
+                }
+                else if (param == "underlayer_width"s) { render_settings.underlayer_width = value.AsDouble(); }
+                else if (param == "color_palette"s) {
+                    for (const auto& color : value.AsArray()) {
+                        render_settings.color_palette.push_back(FormatColorForSvg(color));
+                    }
+                }
+            }
+        }
+
 
         DataFromJson GetDataFromJson(std::istream& input)
         {
             DataFromJson data_from_json;
-            // получаем json документ из входящих данных (cin)
-            auto query_from_json = json::Load(input);
-            // получаем корневой элемент
-            auto& root = query_from_json.GetRoot();
 
+            auto query_from_json = json::Load(input);
+            auto& root = query_from_json.GetRoot();
             auto& root_map = root.AsMap();
 
-            // Запрос на заполнение данными
             if (root_map.count("base_requests")) {
-
                 auto& queries = root_map.at("base_requests").AsArray();
 
                 for (auto& query : queries) {
                     auto& query_map = query.AsMap();
-                    // запрос на создание остановки
+
                     if (query_map.at("type").AsString() == "Stop") {
                         FillStopsFromQuery(query_map, data_from_json);
                     }
 
-
-                    // запрос на создание маршрута
                     if (query_map.at("type").AsString() == "Bus") {
                         FillBusesFromQuery(query_map, data_from_json);
                     }
                 }
             }
+            
 
+            if (root_map.count("stat_requests"s)) {
+                auto& queries = root_map.at("stat_requests"s).AsArray();
+                FillStatRequests(queries, data_from_json);
+            }
 
-            if (root_map.count("stat_requests")) {
-                auto& queries = root_map.at("stat_requests").AsArray();
-                for (auto& query : queries) {
-                    auto& query_map = query.AsMap();
-                    data_from_json.stat_requests.push_back({
-                        query_map.at("id").AsInt(),
-                        query_map.at("name").AsString(),
-                        query_map.at("type").AsString()
-                        });
-                }
+            if (root_map.count("render_settings"s)) {              
+                const auto& setting_map = root_map.at("render_settings"s).AsMap();
+                FillRenderRequests(setting_map, data_from_json);    
             }
 
             return data_from_json;
@@ -95,28 +138,25 @@ namespace catalogue {
 
         void FillTransportCatalogue(catalogue::TransportCatalogue& tc, DataFromJson& data_from_json)
         {
-            // добавление остановок
             for (auto& stop : data_from_json.stops) {
                 tc.AddStop(stop.name, stop.coordinate);
             }
-            // добавление маршрутов
             for (const auto& bus : data_from_json.buses) {
                 tc.AddBus(bus.name, bus.stops);
             }
-            // добавление расстояний между остановками
             for (const auto& dist : data_from_json.distances) {
                 tc.SetDistanceBetweenStops(dist.stop_name_from, dist.stop_name_to, dist.distance);
             }
         }
 
-        void GetStatInfo(TransportCatalogue& tc, DataFromJson& data_from_json, std::ostream& out)
+        void PrintStatInfo(TransportCatalogue& tc, DataFromJson& data_from_json, std::ostream& out)
         {
             json::Array info;
-            // Получение информации по stat_requests
+
             for (auto& stat_request : data_from_json.stat_requests) {
                 if (stat_request.type == "Bus") {
                     auto bus_info = tc.GetBusInfo(stat_request.name);
-                    // Если маршрут не найден:
+
                     if (bus_info.stops_count == 0) {
                         info.emplace_back(json::Dict{
                             {"request_id"s, stat_request.id},
@@ -134,6 +174,7 @@ namespace catalogue {
                     }
 
                 }
+
                 if (stat_request.type == "Stop") {
                     auto stop_info = tc.GetBusesForStop(stat_request.name);
 
@@ -155,11 +196,55 @@ namespace catalogue {
                         {"request_id"s, stat_request.id}
                             });
                     }
+                }
 
+                if (stat_request.type == "Map") {
+                    renderer::MapRenderer render(tc, data_from_json.render_settings);
+                    render.SetRenderBus();
+                    std::stringstream strm;
+                    render.Print(strm);
+
+                    info.emplace_back(json::Dict{
+                        {"request_id"s, stat_request.id},
+                        {"map"s, strm.str()}
+                        });
                 }
             }
-
             json::Print(json::Document{ info }, out);
+        }
+
+        std::string FormatColorForSvg(const json::Node& value)
+        {
+            if (value.IsArray()) {
+                const auto& rgb_arr = value.AsArray();
+                std::string rgb_str = ""s;
+                if (rgb_arr.size() == 3) {
+                    rgb_str = "rgb("s;
+                }
+                if (rgb_arr.size() == 4) {
+                    rgb_str = "rgba("s;
+                }
+                for (size_t i = 0; i < rgb_arr.size(); ++i) {
+                    if (i > 0) {
+                        rgb_str += ',';
+                    }
+                    if (i != 3) {
+                        std::ostringstream strs;
+                        strs << rgb_arr[i].AsInt();
+                        rgb_str += strs.str();
+                    }
+                    else {
+                        std::ostringstream strs;
+                        strs << rgb_arr[i].AsDouble();
+                        rgb_str += strs.str();
+                    }
+                }
+                rgb_str += ')';
+                return rgb_str;
+            }
+            else {
+                return value.AsString();
+            }
         }
 
     }

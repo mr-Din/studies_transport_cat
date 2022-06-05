@@ -56,7 +56,7 @@ namespace catalogue {
 		return iter->second;
 	}
 
-	BusInfo TransportCatalogue::GetBusInfo(std::string_view bus_name)
+	BusInfo TransportCatalogue::GetBusInfo(std::string_view bus_name) const
 	{
 		auto bus = FindBus(bus_name);
 		int distance = 0;
@@ -78,7 +78,7 @@ namespace catalogue {
 		return { bus_name, stops_count, unique_stops_count, distance, curvature };
 	}
 
-	StopInfo TransportCatalogue::GetBusesForStop(std::string_view stop_name)
+	StopInfo TransportCatalogue::GetBusesForStop(std::string_view stop_name) const
 	{
 		static StopInfo empty_res;
 		auto stop = FindStop(stop_name);
@@ -109,5 +109,9 @@ namespace catalogue {
 			return 0;
 		}
 		return iter->second;
+	}
+	const std::deque<Bus> TransportCatalogue::GetBuses() const
+	{
+		return buses_;
 	}
 }

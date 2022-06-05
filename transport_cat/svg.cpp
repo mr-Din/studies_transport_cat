@@ -72,13 +72,10 @@ namespace svg {
 	void Object::Render(const RenderContext& context) const {
 		context.RenderIndent();
 
-		// Делегируем вывод тега своим подклассам
 		RenderObject(context);
 
 		context.out << std::endl;
 	}
-
-	// ---------- Circle ------------------
 
 	Circle& Circle::SetCenter(Point center) {
 		center_ = center;
@@ -97,8 +94,6 @@ namespace svg {
 		RenderAttrs(context.out);
 		out << "/>"sv;
 	}
-
-	// ---------- Polyline ------------------
 
 	Polyline& Polyline::AddPoint(Point point)
 	{
@@ -120,8 +115,6 @@ namespace svg {
 		RenderAttrs(context.out);
 		out << "/>"sv;
 	}
-
-	// ---------- Text ------------------
 
 	Text& Text::SetPosition(Point pos)
 	{
@@ -172,7 +165,6 @@ namespace svg {
 			out << " font-weight=\""sv << *font_weight_<<"\""sv;
 		}
 		RenderAttrs(context.out);
-		// преобразование символов в содержимом текста
 		std::string escaped_data = ""s;
 		std::vector<std::string> special_symbols{
 			"&quot;"s, "&apos;"s, "&lt;"s, "&gt;"s, "&amp;"s

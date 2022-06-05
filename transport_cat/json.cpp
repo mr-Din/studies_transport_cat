@@ -28,7 +28,6 @@ namespace json {
 		Node LoadNumber(istream& input) {
 			std::string parsed_num;
 
-			// Считывает в parsed_num очередной символ из input
 			auto read_char = [&parsed_num, &input] {
 				parsed_num += static_cast<char>(input.get());
 				if (!input) {
@@ -36,7 +35,6 @@ namespace json {
 				}
 			};
 
-			// Считывает одну или более цифр в parsed_num из input
 			auto read_digits = [&input, read_char] {
 				if (!std::isdigit(input.peek())) {
 					throw ParsingError("A digit is expected"s);
@@ -49,24 +47,22 @@ namespace json {
 			if (input.peek() == '-') {
 				read_char();
 			}
-			// Парсим целую часть числа
+
 			if (input.peek() == '0') {
 				read_char();
-				// После 0 в JSON не могут идти другие цифры
 			}
 			else {
 				read_digits();
 			}
 
 			bool is_int = true;
-			// Парсим дробную часть числа
+
 			if (input.peek() == '.') {
 				read_char();
 				read_digits();
 				is_int = false;
 			}
 
-			// Парсим экспоненциальную часть числа
 			if (int ch = input.peek(); ch == 'e' || ch == 'E') {
 				read_char();
 				if (ch = input.peek(); ch == '+' || ch == '-') {
@@ -78,13 +74,11 @@ namespace json {
 
 			try {
 				if (is_int) {
-					// Сначала пробуем преобразовать строку в int
 					try {
 						return Node(std::stoi(parsed_num));
 					}
 					catch (...) {
-						// В случае неудачи, например, при переполнении,
-						// код ниже попробует преобразовать строку в double
+
 					}
 				}
 				return Node(std::stod(parsed_num));
@@ -100,24 +94,20 @@ namespace json {
 			std::string s;
 			while (true) {
 				if (it == end) {
-					// Поток закончился до того, как встретили закрывающую кавычку
 					throw ParsingError("String parsing error");
 				}
 				const char ch = *it;
 				if (ch == '"') {
-					// Встретили закрывающую кавычку
 					++it;
 					break;
 				}
 				else if (ch == '\\') {
-					// Встретили начало escape-последовательности
 					++it;
 					if (it == end) {
-						// Поток завершился сразу после символа обратной косой черты
 						throw ParsingError("String parsing error");
 					}
 					const char escaped_char = *(it);
-					// Обрабатываем одну из последовательностей: \\, \n, \t, \r, \"
+
 					switch (escaped_char) {
 					case 'n':
 						s.push_back('\n');
@@ -135,16 +125,13 @@ namespace json {
 						s.push_back('\\');
 						break;
 					default:
-						// Встретили неизвестную escape-последовательность
 						throw ParsingError("Unrecognized escape sequence \\"s + escaped_char);
 					}
 				}
 				else if (ch == '\n' || ch == '\r') {
-					// Строковый литерал внутри- JSON не может прерываться символами \r или \n
 					throw ParsingError("Unexpected end of line"s);
 				}
 				else {
-					// Просто считываем очередной символ и помещаем его в результирующую строку
 					s.push_back(ch);
 				}
 				++it;
@@ -361,6 +348,65 @@ namespace json {
 
 	Document Load(istream& input) {
 		return Document{ LoadNode(input) };
+	}
+
+	void PrintValue(std::nullptr_t, const PrintContext& ctx) {
+		ctx.out << "null"sv;
+	}
+
+	void PrintValue(const bool& value, const PrintContext& ctx) {
+		ctx.out << std::boolalpha << value;
+	}
+
+	void PrintValue(const std::string& value, const PrintContext& ctx) {
+		ctx.out << "\""sv;
+		for (const char c : value) {
+			if (c == '\r') {
+				ctx.out << "\\r"sv;
+			}
+			else if (c == '\n') {
+				ctx.out << "\\n"sv;
+			}
+			else if (c == '\\' || c == '\"') {
+				ctx.out << "\\"sv;
+				ctx.out << c;
+			}
+			else {
+				ctx.out << c;
+			}
+		}
+		ctx.out << "\""sv;
+	}
+
+	void PrintValue(const Array& array, const PrintContext& ctx) {
+		ctx.out << "[\n"sv;
+		for (size_t i = 0; i < array.size(); ++i) {
+			if (i > 0) { ctx.out << ",\n"sv; }
+			PrintNode(array[i], ctx);
+		}
+		ctx.out << "\n]"sv;
+	}
+
+	void PrintValue(const Dict& dict, const PrintContext& ctx) {
+		ctx.out << "{\n"sv;
+		int i = 0;
+		for (const auto& [key, value] : dict) {
+			if (i > 0) {
+				ctx.out << ",\n"s;
+			}
+			++i;
+
+			PrintNode(key, ctx);
+			ctx.out << ":"sv;
+			PrintNode(value, ctx);
+		}
+		ctx.out << "\n}"sv;
+	}
+
+	void PrintNode(const Node& node, const PrintContext& ctx) {
+		std::visit(
+			[&ctx](const auto& value) { PrintValue(value, ctx);},
+			node.GetValue());
 	}
 
 	void Print(const Document& doc, std::ostream& output) {

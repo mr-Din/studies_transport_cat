@@ -36,11 +36,11 @@ namespace catalogue {
 		const Bus* FindBus(std::string_view bus_name) const;
 		const Stop* FindStop(std::string_view stop_name) const;
 
-		BusInfo GetBusInfo(std::string_view name);
-		StopInfo GetBusesForStop(std::string_view stop_name);
+		BusInfo GetBusInfo(std::string_view name) const;
+		StopInfo GetBusesForStop(std::string_view stop_name) const;
 		void SetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to, int distance);
 		int GetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to) const;
-
+		const std::deque<Bus> GetBuses() const;
 
 	private:
 
