@@ -162,7 +162,7 @@ namespace json {
 
 		Node LoadNull(istream& input) {
 			char c;
-			string word=""s;
+			string word = ""s;
 			while (input >> c && word != "null"s) {
 				word += c;
 			}
@@ -230,72 +230,43 @@ namespace json {
 
 	}  // namespace
 
-	Node::Node(std::nullptr_t value)
-		: value_(value) {
-	}
-
-	Node::Node(int value)
-		: value_(value) {
-	}
-
-	Node::Node(bool value) 
-		: value_(value) {
-	}
-
-	Node::Node(double value) 
-		: value_(value) {
-	}
-
-	Node::Node(string value)
-		: value_(std::move(value)) {
-	}
-	Node::Node(Array array)
-		: value_(std::move(array)) {
-	}
-
-	Node::Node(Dict map)
-		: value_(std::move(map)) {
-	}
-
-
-
 	bool Node::IsInt() const {
-		return holds_alternative<int>(value_);
+		return holds_alternative<int>(*this);
 	}
 
 	bool Node::IsDouble() const {
-		return holds_alternative<int>(value_) || holds_alternative<double>(value_);
+		return holds_alternative<int>(*this) || holds_alternative<double>(*this);
 	}
 
 	bool Node::IsPureDouble() const {
-		return holds_alternative<double>(value_);
+		return holds_alternative<double>(*this);
 	}
 
 	bool Node::IsBool() const {
-		return holds_alternative<bool>(value_);
+		return holds_alternative<bool>(*this);
 	}
 
 	bool Node::IsString() const {
-		return holds_alternative<string>(value_);
+		return holds_alternative<string>(*this);
 	}
 
 	bool Node::IsNull() const {
-		return holds_alternative<nullptr_t>(value_);
+		return holds_alternative<nullptr_t>(*this);
 	}
 
 	bool Node::IsArray() const {
-		return holds_alternative<Array>(value_);
+		return holds_alternative<Array>(*this);
 	}
 
 	bool Node::IsMap() const {
-		return holds_alternative<Dict>(value_);
+		return holds_alternative<Dict>(*this);
 	}
 
 	int Node::AsInt() const {
 		if (!IsInt()) {
 			throw std::logic_error("logic error");
 		}
-		return get<int>(value_);
+		return get<int>(*this);
 	}
 
 	bool Node::AsBool() const
@@ -303,7 +274,7 @@ namespace json {
 		if (!IsBool()) {
 			throw std::logic_error("logic error");
 		}
-		return get<bool>(value_);
+		return get<bool>(*this);
 	}
 
 	double Node::AsDouble() const
@@ -312,30 +283,30 @@ namespace json {
 			throw std::logic_error("logic error");
 		}
 		if (IsInt()) {
-			return static_cast<double>(get<int>(value_));
+			return static_cast<double>(get<int>(*this));
 		}
-		return get<double>(value_);
+		return get<double>(*this);
 	}
 
 	const string& Node::AsString() const {
 		if (!IsString()) {
 			throw std::logic_error("logic error");
 		}
-		return get<string>(value_);
+		return get<string>(*this);
 	}
 
 	const Array& Node::AsArray() const {
 		if (!IsArray()) {
 			throw std::logic_error("logic error");
 		}
-		return get<Array>(value_);
+		return get<Array>(*this);
 	}
 
 	const Dict& Node::AsMap() const {
 		if (!IsMap()) {
 			throw std::logic_error("logic error");
 		}
-		return get<Dict>(value_);
+		return get<Dict>(*this);
 	}
 
 	Document::Document(Node root)
@@ -405,8 +376,9 @@ namespace json {
 
 	void PrintNode(const Node& node, const PrintContext& ctx) {
 		std::visit(
-			[&ctx](const auto& value) { PrintValue(value, ctx);},
-			node.GetValue());
+			[&ctx](const auto& value) {
+				PrintValue(value, ctx);
+			}, node.GetValue());
 	}
 
 	void Print(const Document& doc, std::ostream& output) {

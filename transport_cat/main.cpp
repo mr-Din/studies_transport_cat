@@ -19,5 +19,5 @@ int main()
     // Заполняем каталог данными
     catalogue::json_reader::FillTransportCatalogue(tc, data);
     // Получаем данные
-    catalogue::json_reader::PrintStatInfo(tc, data, std::cout);
+    catalogue::json_reader::PrintStatInfoAll(tc, data, std::cout);
 }

@@ -80,18 +80,18 @@ namespace renderer {
 
     struct RenderSettings
     {
-        double width;
-        double height;
-        double padding;
-        double line_width;
-        double stop_radius;
-        int bus_label_font_size;
-        svg::Point bus_label_offset;
-        int stop_label_font_size;
-        svg::Point stop_label_offset;
-        svg::Color underlayer_color;
-        double underlayer_width;
-        std::vector<svg::Color> color_palette;
+        double width = 0.0;
+        double height = 0.0;
+        double padding = 0.0;
+        double line_width = 0.0;
+        double stop_radius = 0.0;
+        int bus_label_font_size = 0;
+        svg::Point bus_label_offset{};
+        int stop_label_font_size = 0;
+        svg::Point stop_label_offset{};
+        svg::Color underlayer_color{};
+        double underlayer_width = 0.0;
+        std::vector<svg::Color> color_palette{};
     };
 
 	class MapRenderer {

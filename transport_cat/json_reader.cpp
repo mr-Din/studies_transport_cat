@@ -149,68 +149,79 @@ namespace catalogue {
             }
         }
 
-        void PrintStatInfo(TransportCatalogue& tc, DataFromJson& data_from_json, std::ostream& out)
+        void PrintStatInfoAll(TransportCatalogue& tc, DataFromJson& data_from_json, std::ostream& out)
         {
             json::Array info;
 
             for (auto& stat_request : data_from_json.stat_requests) {
                 if (stat_request.type == "Bus") {
-                    auto bus_info = tc.GetBusInfo(stat_request.name);
-
-                    if (bus_info.stops_count == 0) {
-                        info.emplace_back(json::Dict{
-                            {"request_id"s, stat_request.id},
-                            {"error_message"s, "not found"s}
-                            });
-                    }
-                    else {
-                        info.emplace_back(json::Dict{
-                        {"curvature"s, bus_info.curvature},
-                        {"request_id"s, stat_request.id},
-                        {"route_length"s, bus_info.distance},
-                        {"stop_count"s, static_cast<int>(bus_info.stops_count)},
-                        {"unique_stop_count"s,  static_cast<int>(bus_info.unique_stops_count)}
-                            });
-                    }
-
+                    info.emplace_back(std::move(GetStatInfoBus(tc, stat_request)));
                 }
 
                 if (stat_request.type == "Stop") {
-                    auto stop_info = tc.GetBusesForStop(stat_request.name);
-
-                    json::Array stops_to_buses_arr;
-                    stops_to_buses_arr.reserve(stop_info.stops_to_buses_.size());
-                    for (auto& s : stop_info.stops_to_buses_) {
-                        stops_to_buses_arr.emplace_back(std::string(s));
-                    }
-
-                    if (stop_info.name.empty()) {
-                        info.emplace_back(json::Dict{
-                            {"request_id"s, stat_request.id},
-                            {"error_message"s, "not found"s}
-                            });
-                    }
-                    else {
-                        info.emplace_back(json::Dict{
-                        {"buses"s, stops_to_buses_arr},
-                        {"request_id"s, stat_request.id}
-                            });
-                    }
+                    info.emplace_back(std::move(GetStatInfoStop(tc, stat_request)));
                 }
 
                 if (stat_request.type == "Map") {
-                    renderer::MapRenderer render(tc, data_from_json.render_settings);
-                    render.SetRenderBus();
-                    std::stringstream strm;
-                    render.Print(strm);
-
-                    info.emplace_back(json::Dict{
-                        {"request_id"s, stat_request.id},
-                        {"map"s, strm.str()}
-                        });
+                    info.emplace_back(std::move(GetStatInfoRenderer(tc, data_from_json, stat_request)));
                 }
             }
             json::Print(json::Document{ info }, out);
+        }
+
+        json::Dict GetStatInfoBus(const TransportCatalogue& tc, const StatRequest& stat_request) {
+            auto bus_info = tc.GetBusInfo(stat_request.name);
+            if (bus_info.stops_count == 0) {
+                return json::Dict{
+                    {"request_id"s, stat_request.id},
+                    {"error_message"s, "not found"s}
+                    };
+            }
+            else {
+                return json::Dict{
+                {"curvature"s, bus_info.curvature},
+                {"request_id"s, stat_request.id},
+                {"route_length"s, bus_info.distance},
+                {"stop_count"s, static_cast<int>(bus_info.stops_count)},
+                {"unique_stop_count"s,  static_cast<int>(bus_info.unique_stops_count)}
+                    };
+            }
+        }
+
+        json::Dict GetStatInfoStop(const TransportCatalogue& tc, const StatRequest& stat_request) {
+            auto stop_info = tc.GetBusesForStop(stat_request.name);
+
+            json::Array stops_to_buses_arr;
+            stops_to_buses_arr.reserve(stop_info.stops_to_buses_.size());
+            for (auto& s : stop_info.stops_to_buses_) {
+                stops_to_buses_arr.emplace_back(std::string(s));
+            }
+
+            if (stop_info.name.empty()) {
+                return json::Dict{
+                    {"request_id"s, stat_request.id},
+                    {"error_message"s, "not found"s}
+                    };
+            }
+            else {
+                return json::Dict{
+                {"buses"s, stops_to_buses_arr},
+                {"request_id"s, stat_request.id}
+                    };
+            }
+        }
+
+        json::Dict GetStatInfoRenderer(const TransportCatalogue& tc,
+            const DataFromJson& data_from_json, const StatRequest& stat_request) {
+            renderer::MapRenderer render(tc, data_from_json.render_settings);
+            render.SetRenderBus();
+            std::stringstream strm;
+            render.Print(strm);
+
+            return json::Dict{
+                {"request_id"s, stat_request.id},
+                {"map"s, strm.str()}
+                };
         }
 
         std::string FormatColorForSvg(const json::Node& value)

@@ -50,7 +50,11 @@ namespace catalogue {
 
         void FillTransportCatalogue(TransportCatalogue& tc, DataFromJson& data_from_json);
 
-        void PrintStatInfo(TransportCatalogue& tc, DataFromJson& data_from_json, std::ostream& out);
+        void PrintStatInfoAll(TransportCatalogue& tc, DataFromJson& data_from_json, std::ostream& out);
+
+        json::Dict GetStatInfoBus(const TransportCatalogue& tc, const StatRequest& stat_request);
+        json::Dict GetStatInfoStop(const TransportCatalogue& tc, const StatRequest& stat_request);
+        json::Dict GetStatInfoRenderer(const TransportCatalogue& tc, const DataFromJson& data_from_json, const StatRequest& stat_request);
 
         std::string FormatColorForSvg(const json::Node& value);
     }
