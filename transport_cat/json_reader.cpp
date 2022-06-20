@@ -12,12 +12,12 @@ namespace catalogue {
             data_for_stop.coordinate.lng = query_map.at("longitude").AsDouble();
             data_from_json.stops.push_back(std::move(data_for_stop));
 
-            auto& distance_map = query_map.at("road_distances").AsMap();
+            auto& distance_map = query_map.at("road_distances").AsDict();
             for (auto& [to_stop, dist] : distance_map) {
 
                 data_from_json.distances.push_back({
                     data_from_json.stops.back().name,
-                    to_stop, dist.AsInt() });
+                    to_stop, dist.AsDouble() });
             }
         }
 
@@ -26,6 +26,7 @@ namespace catalogue {
             DataForBus data_for_bus;
 
             data_for_bus.name = query_map.at("name").AsString();
+            data_for_bus.is_roundtrip = query_map.at("is_roundtrip").AsBool();
 
             for (auto& stops_of_bus : query_map.at("stops").AsArray()) {
 
@@ -47,7 +48,7 @@ namespace catalogue {
 
         void FillStatRequests(const json::Array& stat_queries, DataFromJson& data_from_json) {
             for (auto& query : stat_queries) {
-                auto& query_map = query.AsMap();
+                auto& query_map = query.AsDict();
                 if (query_map.count("name"s)) {
                     data_from_json.stat_requests.push_back({
                         query_map.at("id"s).AsInt(),
@@ -104,13 +105,13 @@ namespace catalogue {
 
             auto query_from_json = json::Load(input);
             auto& root = query_from_json.GetRoot();
-            auto& root_map = root.AsMap();
+            auto& root_map = root.AsDict();
 
             if (root_map.count("base_requests")) {
                 auto& queries = root_map.at("base_requests").AsArray();
 
                 for (auto& query : queries) {
-                    auto& query_map = query.AsMap();
+                    auto& query_map = query.AsDict();
 
                     if (query_map.at("type").AsString() == "Stop") {
                         FillStopsFromQuery(query_map, data_from_json);
@@ -129,7 +130,7 @@ namespace catalogue {
             }
 
             if (root_map.count("render_settings"s)) {              
-                const auto& setting_map = root_map.at("render_settings"s).AsMap();
+                const auto& setting_map = root_map.at("render_settings"s).AsDict();
                 FillRenderRequests(setting_map, data_from_json);    
             }
 
@@ -142,7 +143,7 @@ namespace catalogue {
                 tc.AddStop(stop.name, stop.coordinate);
             }
             for (const auto& bus : data_from_json.buses) {
-                tc.AddBus(bus.name, bus.stops);
+                tc.AddBus(bus.name, bus.stops, bus.is_roundtrip);
             }
             for (const auto& dist : data_from_json.distances) {
                 tc.SetDistanceBetweenStops(dist.stop_name_from, dist.stop_name_to, dist.distance);
@@ -256,6 +257,75 @@ namespace catalogue {
             else {
                 return value.AsString();
             }
+        }
+
+        void PrintStatInfoAllByBuilder(TransportCatalogue& tc, DataFromJson& data_from_json, std::ostream& out)
+        {
+            json::Array info;
+
+            for (auto& stat_request : data_from_json.stat_requests) {
+                if (stat_request.type == "Bus") {
+                    info.emplace_back(std::move(GetStatInfoBusByBuilder(tc, stat_request)));
+                }
+
+                if (stat_request.type == "Stop") {
+                    info.emplace_back(std::move(GetStatInfoStopByBuilder(tc, stat_request)));
+                }
+
+                if (stat_request.type == "Map") {
+                    info.emplace_back(std::move(GetStatInfoRendererByBuilder(tc, data_from_json, stat_request)));
+                }
+            }
+            json::Print(json::Document{ info }, out);
+        }
+
+        json::Node GetStatInfoBusByBuilder(const TransportCatalogue& tc, const StatRequest& stat_request)
+        {
+            auto bus_info = tc.GetBusInfo(stat_request.name);
+            if (bus_info.stops_count == 0) {
+                return json::Builder{}.StartDict().Key("request_id"s).Value(stat_request.id)
+                    .Key("error_message"s).Value("not found"s).EndDict().Build();
+            }
+            else {
+                return json::Builder{}.StartDict()
+                    .Key("curvature"s).Value(bus_info.curvature)
+                    .Key("request_id"s).Value(stat_request.id)
+                    .Key("route_length"s).Value(bus_info.distance)
+                    .Key("stop_count"s).Value(static_cast<int>(bus_info.stops_count))
+                    .Key("unique_stop_count"s).Value(static_cast<int>(bus_info.unique_stops_count))
+                    .EndDict().Build();
+            }
+        }
+
+        json::Node GetStatInfoStopByBuilder(const TransportCatalogue& tc, const StatRequest& stat_request)
+        {
+            auto stop_info = tc.GetBusesForStop(stat_request.name);
+
+            json::Array stops_to_buses_arr;
+            stops_to_buses_arr.reserve(stop_info.stops_to_buses_.size());
+            for (auto& s : stop_info.stops_to_buses_) {
+                stops_to_buses_arr.emplace_back(std::string(s));
+            }
+
+            if (stop_info.name.empty()) {
+                return json::Builder{}.StartDict().Key("request_id"s).Value(stat_request.id)
+                    .Key("error_message"s).Value("not found"s).EndDict().Build();
+            }
+            else {
+                return json::Builder{}.StartDict().Key("buses"s).Value(stops_to_buses_arr)
+                    .Key("request_id"s).Value(stat_request.id).EndDict().Build();
+            }
+        }
+
+        json::Node GetStatInfoRendererByBuilder(const TransportCatalogue& tc, const DataFromJson& data_from_json, const StatRequest& stat_request)
+        {
+            renderer::MapRenderer render(tc, data_from_json.render_settings);
+            render.SetRenderBus();
+            std::stringstream strm;
+            render.Print(strm);
+
+            return json::Builder{}.StartDict().Key("request_id"s).Value(stat_request.id)
+                .Key("map"s).Value(strm.str()).EndDict().Build();
         }
 
     }

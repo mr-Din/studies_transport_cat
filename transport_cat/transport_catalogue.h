@@ -31,15 +31,15 @@ namespace catalogue {
 
 		void AddStop(std::string_view stop_name, const geo::Coordinates& coordinates);
 		void AddBus(std::string_view bus_name,
-			const std::vector<std::string_view>& stops_query);
+			const std::vector<std::string_view>& stops_query, bool is_roundtrip);
 
 		const Bus* FindBus(std::string_view bus_name) const;
 		const Stop* FindStop(std::string_view stop_name) const;
 
 		BusInfo GetBusInfo(std::string_view name) const;
 		StopInfo GetBusesForStop(std::string_view stop_name) const;
-		void SetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to, int distance);
-		int GetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to) const;
+		void SetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to, double distance);
+		double GetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to) const;
 		const std::deque<Bus> GetBuses() const;
 
 	private:
@@ -49,6 +49,6 @@ namespace catalogue {
 		std::deque<Bus> buses_;
 		std::unordered_map<std::string_view, const Bus*> busname_to_bus_;
 		std::unordered_map<const Stop*, std::set<std::string_view>> stops_to_buses_;
-		std::unordered_map<std::pair<const Stop*, const Stop*>, int, detail::PairStopsHasher> distance_;
+		std::unordered_map<std::pair<const Stop*, const Stop*>, double, detail::PairStopsHasher> distance_;
 	};
 }

@@ -45,7 +45,9 @@ namespace renderer {
     void MapRenderer::AddBusNamesToRenderer(const SphereProjector& proj) {
         size_t num_color = 0;
         for (const auto& bus_name : buses_name_view_) {
-            const auto& bus = db_.FindBus(bus_name)->bus;
+            const auto& bus_struct = db_.FindBus(bus_name);
+            const bool is_roundtrip = bus_struct->is_roundtrip;
+            const auto& bus = bus_struct->bus;
 
             auto start_stop_coordinates_proj = proj(bus.front()->coordinates);
             svg::Text text_bus_name;
@@ -68,8 +70,9 @@ namespace renderer {
             render_bus_.Add(text_bus_name_shadow);
             render_bus_.Add(text_bus_name);
 
-            if ((bus.size() > 2 && bus[1] == bus[bus.size() - 2] && bus[0] != bus[bus.size() / 2])
-                || bus.size() == 3) {
+            /*if ((bus.size() > 2 && bus[1] == bus[bus.size() - 2] && bus[0] != bus[bus.size() / 2])
+                || bus.size() == 3)*/ 
+            if (!is_roundtrip && bus[0] != bus[bus.size() / 2]){
                 start_stop_coordinates_proj = proj(bus[bus.size() / 2]->coordinates);
                 text_bus_name.SetPosition(svg::Point{
                     start_stop_coordinates_proj.x,start_stop_coordinates_proj.y

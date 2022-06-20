@@ -15,7 +15,7 @@ namespace catalogue {
 	}
 
 	void TransportCatalogue::AddBus(string_view bus_name,
-		const vector<string_view>& stops_query) {
+		const vector<string_view>& stops_query, bool is_roundtrip) {
 
 		vector<const Stop*> bus;
 		bus.reserve(stops_query.size());
@@ -25,7 +25,7 @@ namespace catalogue {
 				bus.push_back(stopname_to_stop_[stop_name]);
 			});
 
-		buses_.push_back({ bus_name, bus });
+		buses_.push_back({ bus_name, bus, is_roundtrip });
 
 		busname_to_bus_[buses_.back().name] = &buses_.back();
 
@@ -59,7 +59,7 @@ namespace catalogue {
 	BusInfo TransportCatalogue::GetBusInfo(std::string_view bus_name) const
 	{
 		auto bus = FindBus(bus_name);
-		int distance = 0;
+		double distance = 0.0;
 		double curvature = 0.0;
 		double geo_distance = 0.0;
 		size_t stops_count = 0;
@@ -70,7 +70,7 @@ namespace catalogue {
 				geo_distance += ComputeDistance(bus->bus[i]->coordinates, bus->bus[i + 1]->coordinates);
 				distance += GetDistanceBetweenStops(bus->bus[i]->name, bus->bus[i + 1]->name);
 			}
-			curvature = static_cast<double>(distance) / geo_distance;
+			curvature = distance / geo_distance;
 
 			std::unordered_set<const Stop*> unique_stops(bus->bus.begin(), bus->bus.end());
 			unique_stops_count = unique_stops.size();
@@ -90,7 +90,7 @@ namespace catalogue {
 		return { stop_name, iter->second };
 	}
 
-	void TransportCatalogue::SetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to, int distance)
+	void TransportCatalogue::SetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to, double distance)
 	{
 		auto stop_from = FindStop(stop_name_from);
 		auto stop_to = FindStop(stop_name_to);
@@ -102,7 +102,7 @@ namespace catalogue {
 		}
 	}
 
-	int TransportCatalogue::GetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to) const
+	double TransportCatalogue::GetDistanceBetweenStops(std::string_view stop_name_from, std::string_view stop_name_to) const
 	{
 		auto iter = distance_.find({ FindStop(stop_name_from), FindStop(stop_name_to) });
 		if (iter == distance_.end()) {

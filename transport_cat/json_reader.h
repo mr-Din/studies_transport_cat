@@ -1,5 +1,6 @@
 #pragma once
 #include "json.h"
+#include "json_builder.h"
 #include "transport_catalogue.h"
 #include "map_renderer.h"
 #include <sstream>
@@ -16,12 +17,13 @@ namespace catalogue {
             std::string name;
             std::vector<std::string_view> stops;
             std::deque<std::string> stops_str;
+            bool is_roundtrip;
         };
 
         struct DataForDistance {
             std::string stop_name_from;
             std::string stop_name_to;
-            int distance;
+            double distance;
         };
 
         struct StatRequest {
@@ -57,5 +59,10 @@ namespace catalogue {
         json::Dict GetStatInfoRenderer(const TransportCatalogue& tc, const DataFromJson& data_from_json, const StatRequest& stat_request);
 
         std::string FormatColorForSvg(const json::Node& value);
+
+        void PrintStatInfoAllByBuilder(TransportCatalogue& tc, DataFromJson& data_from_json, std::ostream& out);
+        json::Node GetStatInfoBusByBuilder(const TransportCatalogue& tc, const StatRequest& stat_request);
+        json::Node GetStatInfoStopByBuilder(const TransportCatalogue& tc, const StatRequest& stat_request);
+        json::Node GetStatInfoRendererByBuilder(const TransportCatalogue& tc, const DataFromJson& data_from_json, const StatRequest& stat_request);
     }
 }

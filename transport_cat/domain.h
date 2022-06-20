@@ -14,13 +14,14 @@ namespace catalogue {
 	struct Bus {
 		std::string_view name;
 		std::vector<const Stop*> bus;
+		bool is_roundtrip;
 	};
 
 	struct BusInfo {
 		std::string_view name;
 		size_t stops_count;
 		size_t unique_stops_count;
-		int distance;
+		double distance;
 		double curvature;
 	};
 
